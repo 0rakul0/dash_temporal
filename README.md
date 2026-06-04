@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 ```text
 Start Command:
-gunicorn app:server --bind 0.0.0.0:$PORT
+bash start.sh
 ```
 
 O Render define a variavel `PORT` automaticamente. O app precisa escutar em `0.0.0.0:$PORT` para ficar acessivel publicamente.
