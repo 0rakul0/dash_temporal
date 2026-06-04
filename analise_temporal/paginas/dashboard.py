@@ -64,7 +64,7 @@ def create_layout():
         children=[
             html.Div(
                 className="dashboard-shell",
-                style={"maxWidth": "1500px", "margin": "0 auto"},
+                style={"maxWidth": "1560px", "margin": "0 auto"},
                 children=[
                     header_section(ano_min, ano_max),
                     context_tiles(),

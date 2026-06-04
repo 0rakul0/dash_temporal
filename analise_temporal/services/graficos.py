@@ -233,6 +233,10 @@ def fig_barras_movimentacoes(dff_mov):
     fig.update_traces(texttemplate="%{text:,}", textposition="outside")
     fig.update_layout(
         height=520,
+        bargap=0.28,
+        bargroupgap=0.1,
+        font=dict(size=10),
+        title_font_size=18,
         uniformtext_minsize=10,
         uniformtext_mode="hide",
         yaxis_title="Quantidade de atos",
@@ -303,6 +307,10 @@ def fig_barras_movimentacoes_por_orgao(dff_mov):
     fig.add_vline(x=0, line_width=1, line_color="#444")
     fig.update_layout(
         height=760,
+        bargap=0.36,
+        bargroupgap=0.1,
+        font=dict(size=10),
+        title_font_size=18,
         xaxis=dict(
             title="Exonerações à esquerda, nomeações à direita",
             tickformat=",d",
@@ -476,6 +484,10 @@ def fig_timeline_movimentacoes(dff_mov):
     fig.update_traces(texttemplate="%{text:,}", textposition="outside")
     fig.update_layout(
         height=460,
+        bargap=0.28,
+        bargroupgap=0.1,
+        font=dict(size=10),
+        title_font_size=18,
         uniformtext_minsize=9,
         uniformtext_mode="hide",
         yaxis_title="Quantidade de atos",
@@ -765,7 +777,11 @@ def fig_fluxo_por_governo(dff_mov):
     )
     fig.add_vline(x=0, line_width=1, line_color="#444")
     fig.update_layout(
-        height=max(460, 48 * max(1, len(ordem)) + 160),
+        height=max(380, 32 * max(1, len(ordem)) + 130),
+        bargap=0.36,
+        bargroupgap=0.1,
+        font=dict(size=10),
+        title_font_size=18,
         xaxis_title="Exonerações à esquerda, nomeações à direita",
         yaxis_title="",
         legend_title_text="Movimentação",
@@ -809,7 +825,10 @@ def fig_saldo_por_governo(dff_mov):
     )
     fig.add_vline(x=0, line_width=1, line_color="#444")
     fig.update_layout(
-        height=max(420, 44 * max(1, len(base)) + 150),
+        height=max(360, 30 * max(1, len(base)) + 120),
+        bargap=0.4,
+        font=dict(size=10),
+        title_font_size=18,
         yaxis_title="",
         showlegend=True,
         margin=dict(l=24, r=24, t=70, b=50),
@@ -863,6 +882,10 @@ def fig_timeline_governo(dff_mov):
     )
     fig.update_layout(
         height=520 if selected_governments > 3 else max(420, selected_governments * 280),
+        bargap=0.3,
+        bargroupgap=0.1,
+        font=dict(size=10),
+        title_font_size=18,
         legend_title_text="Movimentação",
         margin=dict(l=24, r=24, t=70, b=50),
     )
@@ -913,7 +936,11 @@ def fig_orgaos_por_governo(dff_mov, periodo=None):
     )
     fig.add_vline(x=0, line_width=1, line_color="#444")
     fig.update_layout(
-        height=780,
+        height=560,
+        bargap=0.36,
+        bargroupgap=0.1,
+        font=dict(size=10),
+        title_font_size=18,
         xaxis_title="Exonerações à esquerda, nomeações à direita",
         yaxis_title="",
         legend_title_text="Movimentação",
