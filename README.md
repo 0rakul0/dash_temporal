@@ -2,6 +2,12 @@
 
 Esta pasta contem uma versao enxuta do dashboard temporal para deploy no Render.
 
+URL publica: <https://dash-temporal.onrender.com/>
+
+Este repositorio e o ambiente de deploy. O desenvolvimento principal fica em
+`D:\github\exoneracoes_nomeacoes_dou`; aqui, atualize apenas os dados de
+consumo quando a base analitica mudar.
+
 ## Arquivos incluidos
 
 - `app.py`: ponto de entrada do Dash.

@@ -9,7 +9,7 @@ from analise_temporal.paginas.dashboard import create_layout, register_callbacks
 
 app = Dash(__name__)
 server = app.server
-app.title = "DOU RJ - Transicoes Markov"
+app.title = "DOU RJ - Analise Temporal de Publicacoes"
 app.layout = create_layout()
 register_callbacks(app)
 
