@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+import networkx as nx
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -493,7 +494,7 @@ def fig_serie_temporal_governo(dff_mov):
 
     base["periodo"] = base["data_movimentacao"].dt.to_period("M").dt.to_timestamp()
     serie = (
-        base.groupby(["periodo", "representante_governo", "tipo_ato"])
+        base.groupby(["periodo", "representante_governo", "tipo_ato"], observed=True)
         .agg(
             quantidade=("tipo_ato", "size"),
             papeis=("governador_edicao", papeis_governo),
@@ -506,7 +507,7 @@ def fig_serie_temporal_governo(dff_mov):
         return go.Figure().update_layout(title="Sem dados para serie temporal")
 
     governos = (
-        serie.groupby("representante_governo")["quantidade"]
+        serie.groupby("representante_governo", observed=True)["quantidade"]
         .sum()
         .sort_values(ascending=False)
         .index
@@ -517,7 +518,7 @@ def fig_serie_temporal_governo(dff_mov):
         governo: palette[index % len(palette)]
         for index, governo in enumerate(governos)
     }
-    origin_by_government = serie.groupby("representante_governo")["origem"].first().to_dict()
+    origin_by_government = serie.groupby("representante_governo", observed=True)["origem"].first().to_dict()
 
     fig = go.Figure()
     action_config = {
@@ -1025,8 +1026,6 @@ def fig_heatmap(mat_prob):
 
 
 def fig_network_3d(trans):
-    import networkx as nx
-
     if trans.empty:
         return go.Figure().update_layout(title="Sem dados para rede 3D")
 

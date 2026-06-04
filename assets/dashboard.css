@@ -1,0 +1,32 @@
+.dashboard-shell {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.dash-dropdown {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .dashboard-hero,
+  .context-grid,
+  .filters-grid,
+  .metrics-grid,
+  .chart-grid-two,
+  .methodology-grid,
+  .insights-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-hero h1 {
+    font-size: 24px !important;
+  }
+
+  .dash-graph {
+    min-width: 0;
+  }
+}
