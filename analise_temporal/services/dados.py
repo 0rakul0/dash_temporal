@@ -8,6 +8,36 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ANALISES_DIR = PROJECT_ROOT / "saida" / "analises"
+RETORNO_COLUMNS = [
+    "nome_normalizado",
+    "data_publicacao",
+    "data_exoneracao_anterior",
+    "orgao",
+    "cargo_assinante",
+    "governador_edicao",
+    "mudou_cargo_desde_exoneracao",
+    "mudou_orgao_desde_exoneracao",
+    "dias_desde_exoneracao",
+]
+MOVIMENTACAO_COLUMNS = [
+    "nome_normalizado",
+    "data_publicacao",
+    "tipo_ato",
+    "orgao",
+    "cargo_assinante",
+    "governador_edicao",
+]
+CATEGORY_COLUMNS = [
+    "estado",
+    "tipo_ato",
+    "orgao",
+    "cargo_assinante",
+    "autoria_ato",
+    "governador_edicao",
+    "representante_governo",
+    "origem_representante",
+    "representante_origem",
+]
 
 def governador_da_edicao(markdown_path):
     if not markdown_path:
@@ -188,8 +218,8 @@ def read_state_csvs(analyses_dir):
         if not retornos_path.exists() or not movimentacoes_path.exists():
             continue
 
-        retorno_frame = pd.read_csv(retornos_path)
-        movimentacao_frame = pd.read_parquet(movimentacoes_path)
+        retorno_frame = pd.read_csv(retornos_path, usecols=lambda column: column in RETORNO_COLUMNS)
+        movimentacao_frame = pd.read_parquet(movimentacoes_path, columns=MOVIMENTACAO_COLUMNS)
         retorno_frame["estado"] = state
         movimentacao_frame["estado"] = state
         retorno_frames.append(retorno_frame)
@@ -199,6 +229,13 @@ def read_state_csvs(analyses_dir):
         raise FileNotFoundError(f"Nenhuma analise por UF encontrada em {analyses_dir}")
 
     return pd.concat(retorno_frames, ignore_index=True), pd.concat(movimentacao_frames, ignore_index=True)
+
+
+def compact_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    for column in CATEGORY_COLUMNS:
+        if column in frame.columns:
+            frame[column] = frame[column].astype("category")
+    return frame
 
 
 df, df_mov = read_state_csvs(ANALISES_DIR)
@@ -237,10 +274,10 @@ for frame in [df, df_mov]:
     frame["origem_representante"] = (
         frame["origem_representante"].fillna("").astype(str).str.strip().replace("", "Nao identificado")
     )
-    frame["representante_origem"] = frame.apply(
-        lambda row: f"{row['representante_governo']} ({row['origem_representante']})",
-        axis=1,
+    frame["representante_origem"] = (
+        frame["representante_governo"].astype(str) + " (" + frame["origem_representante"].astype(str) + ")"
     )
+    compact_frame(frame)
 
 # =====================================================
 # PREP
@@ -318,10 +355,10 @@ def prepare_loaded_frames(loaded_df, loaded_df_mov):
         frame["origem_representante"] = (
             frame["origem_representante"].fillna("").astype(str).str.strip().replace("", "Nao identificado")
         )
-        frame["representante_origem"] = frame.apply(
-            lambda row: f"{row['representante_governo']} ({row['origem_representante']})",
-            axis=1,
+        frame["representante_origem"] = (
+            frame["representante_governo"].astype(str) + " (" + frame["origem_representante"].astype(str) + ")"
         )
+        compact_frame(frame)
     loaded_df["mudou_cargo"] = loaded_df["mudou_cargo_desde_exoneracao"].apply(norm_bool)
     loaded_df["mudou_orgao"] = loaded_df["mudou_orgao_desde_exoneracao"].apply(norm_bool)
     loaded_df["tempo_cluster"] = loaded_df["dias_desde_exoneracao"].apply(classificar_tempo)
