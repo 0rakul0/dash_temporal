@@ -49,6 +49,13 @@ if not defined BRANCH (
 
 echo Branch: %BRANCH%
 
+echo Consolidando dados antes da sincronizacao...
+python scripts\consolidar_dados.py
+if errorlevel 1 (
+    echo ERRO: falha ao consolidar os dados.
+    exit /b 40
+)
+
 git add -A
 if errorlevel 1 (
     echo ERRO: falha ao adicionar as alteracoes.
