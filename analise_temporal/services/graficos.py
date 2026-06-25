@@ -42,7 +42,7 @@ def adicionar_orgao_grafico(base):
         return base
 
     rotulos = (
-        base.groupby(["orgao_chave", "orgao_rotulo"])
+        base.groupby(["orgao_chave", "orgao_rotulo"], observed=True)
         .size()
         .reset_index(name="quantidade")
         .sort_values(["orgao_chave", "quantidade", "orgao_rotulo"], ascending=[True, False, True])
@@ -106,7 +106,7 @@ def construir_eventos(dff):
 
     trans = (
         ev.dropna(subset=["prox_estado"])
-        .groupby(["estado", "prox_estado"])
+        .groupby(["estado", "prox_estado"], observed=True)
         .size()
         .reset_index(name="count")
     )
@@ -209,7 +209,7 @@ def fig_barras_movimentacoes(dff_mov):
     base = (
         dff_mov.dropna(subset=["ano"])
         .assign(ano=lambda data: data["ano"].astype(int))
-        .groupby(["ano", "tipo_ato"])
+        .groupby(["ano", "tipo_ato"], observed=True)
         .size()
         .reset_index(name="quantidade")
     )
@@ -257,7 +257,7 @@ def fig_barras_movimentacoes_por_orgao(dff_mov):
         return go.Figure().update_layout(title="Sem órgãos identificados para os filtros selecionados")
 
     ranking = (
-        base.groupby("orgao_chave")
+        base.groupby("orgao_chave", observed=True)
         .size()
         .sort_values(ascending=False)
         .head(TOP_N_ORGAOS)
@@ -266,7 +266,7 @@ def fig_barras_movimentacoes_por_orgao(dff_mov):
     base = base[base["orgao_chave"].isin(ranking)]
 
     barras = (
-        base.groupby(["orgao_chave", "orgao_grafico", "tipo_ato"])
+        base.groupby(["orgao_chave", "orgao_grafico", "tipo_ato"], observed=True)
         .size()
         .reset_index(name="quantidade")
     )
@@ -278,7 +278,7 @@ def fig_barras_movimentacoes_por_orgao(dff_mov):
 
     ordem_orgaos = (
         barras.assign(abs_fluxo=barras["fluxo"].abs())
-        .groupby("orgao_grafico")["abs_fluxo"]
+        .groupby("orgao_grafico", observed=True)["abs_fluxo"]
         .sum()
         .sort_values()
         .index
@@ -429,7 +429,7 @@ def fig_timeline_eventos(dff):
         return go.Figure().update_layout(title="Sem dados para timeline")
 
     timeline = (
-        dff.groupby(["ano", "tempo_cluster"])
+        dff.groupby(["ano", "tempo_cluster"], observed=True)
         .size()
         .reset_index(name="eventos")
         .sort_values("ano")
@@ -459,7 +459,7 @@ def fig_timeline_movimentacoes(dff_mov):
 
     base["mes"] = base["data_movimentacao"].dt.to_period("M").dt.to_timestamp()
     timeline = (
-        base.groupby(["mes", "tipo_ato"])
+        base.groupby(["mes", "tipo_ato"], observed=True)
         .size()
         .reset_index(name="quantidade")
         .sort_values("mes")
@@ -734,7 +734,7 @@ def fig_fluxo_por_governo(dff_mov):
 
     eixo_label = eixo_representante_label(dff_mov)
     base = (
-        dff_mov.groupby(["representante_origem", "tipo_ato"])
+        dff_mov.groupby(["representante_origem", "tipo_ato"], observed=True)
         .size()
         .reset_index(name="quantidade")
     )
@@ -745,7 +745,7 @@ def fig_fluxo_por_governo(dff_mov):
     base["rotulo"] = base["quantidade"].map(lambda value: f"{value:,}".replace(",", "."))
     ordem = (
         base.assign(abs_fluxo=base["fluxo"].abs())
-        .groupby("representante_origem")["abs_fluxo"]
+        .groupby("representante_origem", observed=True)["abs_fluxo"]
         .sum()
         .sort_values()
         .index
@@ -796,7 +796,7 @@ def fig_saldo_por_governo(dff_mov):
 
     eixo_label = eixo_representante_label(dff_mov)
     base = (
-        dff_mov.groupby(["representante_origem", "tipo_ato"])
+        dff_mov.groupby(["representante_origem", "tipo_ato"], observed=True)
         .size()
         .unstack(fill_value=0)
         .reset_index()
@@ -857,7 +857,7 @@ def fig_timeline_governo(dff_mov):
         x_label = "Ano"
 
     timeline = (
-        base.groupby(["periodo", "representante_origem", "tipo_ato"])
+        base.groupby(["periodo", "representante_origem", "tipo_ato"], observed=True)
         .size()
         .reset_index(name="quantidade")
         .sort_values("periodo")
@@ -903,21 +903,21 @@ def fig_orgaos_por_governo(dff_mov, periodo=None):
         return go.Figure().update_layout(title="Sem órgãos identificados para os filtros selecionados")
 
     ranking = (
-        base.groupby("orgao_chave")
+        base.groupby("orgao_chave", observed=True)
         .size()
         .sort_values(ascending=False)
         .head(TOP_N_ORGAOS)
         .index
     )
     base = base[base["orgao_chave"].isin(ranking)]
-    barras = base.groupby(["orgao_chave", "orgao_grafico", "tipo_ato"]).size().reset_index(name="quantidade")
+    barras = base.groupby(["orgao_chave", "orgao_grafico", "tipo_ato"], observed=True).size().reset_index(name="quantidade")
     barras["fluxo"] = barras.apply(
         lambda row: -row["quantidade"] if row["tipo_ato"] == "exoneracao" else row["quantidade"],
         axis=1,
     )
     ordem = (
         barras.assign(abs_fluxo=barras["fluxo"].abs())
-        .groupby("orgao_grafico")["abs_fluxo"]
+        .groupby("orgao_grafico", observed=True)["abs_fluxo"]
         .sum()
         .sort_values()
         .index
@@ -954,7 +954,7 @@ def tabela_resumo_governos(dff_mov):
         return html.Div("Sem dados para os filtros selecionados.")
 
     base = (
-        dff_mov.groupby(["representante_origem", "tipo_ato"])
+        dff_mov.groupby(["representante_origem", "tipo_ato"], observed=True)
         .size()
         .unstack(fill_value=0)
         .reset_index()
@@ -1171,4 +1171,494 @@ def gerar_resumo(dff, trans, mat_prob):
         linhas.append("Não calculável para o filtro atual.")
 
     return "\n".join(linhas)
+
+
+# =====================================================
+# ROTATIVIDADE POR ORGAO
+# =====================================================
+def fig_rotatividade_orgaos(dff_mov, top_n=20):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["orgao"]).copy()
+    base["orgao"] = base["orgao"].astype(str).str.strip()
+    base = base[base["orgao"] != ""]
+
+    agrupado = base.groupby(["orgao", "tipo_ato"], observed=True).size().reset_index(name="quantidade")
+    total_por_orgao = agrupado.groupby("orgao", observed=True)["quantidade"].sum().sort_values(ascending=False)
+
+    top_orgaos = total_por_orgao.head(top_n).index
+    agrupado = agrupado[agrupado["orgao"].isin(top_orgaos)]
+
+    fig = px.bar(
+        agrupado,
+        x="orgao",
+        y="quantidade",
+        color="tipo_ato",
+        barmode="group",
+        category_orders={"tipo_ato": ["exoneracao", "nomeacao"]},
+        labels={"orgao": "Órgão", "quantidade": "Atos", "tipo_ato": "Tipo"},
+        title=f"Rotatividade por Órgão - Top {top_n}",
+    )
+    fig.update_layout(
+        height=600, xaxis_tickangle=-45, bargap=0.3, bargroupgap=0.08,
+        font=dict(size=10), title_font_size=18,
+    )
+    fig.update_traces(texttemplate="%{y:,}", textposition="outside", textfont_size=9)
+    return fig
+
+
+# =====================================================
+# SAZONALIDADE
+# =====================================================
+def fig_sazonalidade_mensal(dff_mov):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["data_movimentacao", "tipo_ato"]).copy()
+    base["mes"] = base["data_movimentacao"].dt.month
+    base["ano"] = base["data_movimentacao"].dt.year
+
+    agrupado = base.groupby(["ano", "mes", "tipo_ato"], observed=True).size().reset_index(name="quantidade")
+    media_mensal = agrupado.groupby(["mes", "tipo_ato"], observed=True)["quantidade"].mean().reset_index()
+
+    fig = px.bar(
+        media_mensal,
+        x="mes",
+        y="quantidade",
+        color="tipo_ato",
+        barmode="group",
+        category_orders={"tipo_ato": ["exoneracao", "nomeacao"]},
+        labels={"mes": "Mês", "quantidade": "Média de atos", "tipo_ato": "Tipo"},
+        title="Sazonalidade Mensal - Média Histórica por Mês",
+    )
+    fig.update_layout(
+        height=450, bargap=0.25, bargroupgap=0.08,
+        font=dict(size=10), title_font_size=18,
+        xaxis=dict(tickmode="array", tickvals=list(range(1, 13)), ticktext=[
+            "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"
+        ]),
+    )
+    fig.update_traces(texttemplate="%{y:,.0f}", textposition="outside", textfont_size=9)
+    return fig
+
+
+def fig_sazonalidade_heatmap(dff_mov):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["data_movimentacao"]).copy()
+    base["ano"] = base["data_movimentacao"].dt.year.astype(int)
+    base["mes"] = base["data_movimentacao"].dt.month
+
+    agrupado = base.groupby(["ano", "mes"]).size().reset_index(name="quantidade")
+    pivot = agrupado.pivot(index="ano", columns="mes", values="quantidade").fillna(0)
+
+    fig = px.imshow(
+        pivot,
+        labels=dict(x="Mês", y="Ano", color="Atos"),
+        title="Intensidade Mensal de Movimentações",
+        aspect="auto",
+        color_continuous_scale="Viridis",
+    )
+    fig.update_layout(height=500, title_font_size=18)
+    fig.update_xaxes(tickmode="array", tickvals=list(range(12)), ticktext=[
+        "Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"
+    ])
+    return fig
+
+
+# =====================================================
+# CICLO POLITICO
+# =====================================================
+def fig_ciclo_politico(dff_mov):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["ano", "representante_governo"]).copy()
+    base["ano"] = base["ano"].astype(int)
+
+    serie = base.groupby(["ano", "representante_governo", "tipo_ato"], observed=True).size().reset_index(name="quantidade")
+    serie["ano"] = serie["ano"].astype(int)
+
+    fig = px.bar(
+        serie,
+        x="ano",
+        y="quantidade",
+        color="representante_governo",
+        pattern_shape="tipo_ato",
+        barmode="stack",
+        labels={
+            "ano": "Ano", "quantidade": "Atos",
+            "representante_governo": "Governo", "tipo_ato": "Tipo",
+        },
+        title="Ciclo Político - Volume de Atos por Governo",
+    )
+    fig.update_layout(
+        height=500, title_font_size=18, bargap=0.12,
+        hovermode="x unified",
+        legend=dict(orientation="h", y=-0.3, font=dict(size=10)),
+    )
+    fig.update_xaxes(dtick=1)
+    fig.update_traces(texttemplate="%{y:,}", textposition="inside", textfont_size=9)
+    return fig
+
+
+def fig_transicoes_governo(dff_mov):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["ano", "representante_governo"]).copy()
+    base["ano"] = base["ano"].astype(int)
+
+    comparacao = base.groupby(["ano", "representante_governo", "tipo_ato"], observed=True).size().reset_index(name="quantidade")
+    governos_por_ano = base.groupby("ano")["representante_governo"].unique()
+
+    linhas = []
+    for ano in sorted(governos_por_ano.index):
+        govs = governos_por_ano[ano]
+        for gov in govs:
+            dados_gov = comparacao[(comparacao["ano"] == ano) & (comparacao["representante_governo"] == gov)]
+            total = dados_gov["quantidade"].sum()
+            eh_transicao = len(govs) > 1
+            linhas.append({"ano": ano, "governo": gov, "total_atos": total, "transicao": eh_transicao})
+
+    df_trans = pd.DataFrame(linhas)
+
+    fig = px.bar(
+        df_trans,
+        x="ano",
+        y="total_atos",
+        color="governo",
+        barmode="stack",
+        labels={"ano": "Ano", "total_atos": "Atos", "governo": "Governo"},
+        title="Atos por Governo e Ano",
+    )
+
+    # Add triangle markers for transition years
+    for _, row in df_trans.drop_duplicates("ano").iterrows():
+        if row["transicao"]:
+            fig.add_annotation(
+                x=row["ano"], y=1,
+                text="▲", showarrow=False,
+                yref="paper", yanchor="bottom",
+                font=dict(size=14, color="#eab308"),
+            )
+
+    fig.update_layout(
+        height=450, title_font_size=18, bargap=0.12,
+        hovermode="x unified",
+        legend=dict(orientation="h", y=-0.3, font=dict(size=10)),
+    )
+    fig.update_xaxes(dtick=1)
+    return fig
+
+
+# =====================================================
+# TEMPO DE PREENCHIMENTO
+# =====================================================
+def fig_tempo_preenchimento(df, dff_mov):
+    if df.empty or dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = df.dropna(subset=["dias_desde_exoneracao"]).copy()
+    base = base[base["dias_desde_exoneracao"] >= 0]
+
+    fig = go.Figure()
+    fig.add_trace(go.Histogram(
+        x=base["dias_desde_exoneracao"],
+        nbinsx=50,
+        marker_color="#1f5eff",
+        name="Distribuição",
+    ))
+    media = base["dias_desde_exoneracao"].mean()
+    mediana = base["dias_desde_exoneracao"].median()
+    fig.add_vline(x=media, line_dash="dash", line_color="red",
+                  annotation_text=f"Média: {media:.0f}d", annotation_position="top right")
+    fig.add_vline(x=mediana, line_dash="dot", line_color="green",
+                  annotation_text=f"Mediana: {mediana:.0f}d", annotation_position="top left")
+
+    fig.update_layout(
+        title="Distribuição do Tempo entre Exoneração e Nova Nomeação",
+        xaxis_title="Dias", yaxis_title="Pessoas",
+        height=450, title_font_size=18, bargap=0.08,
+    )
+    return fig
+
+def fig_preenchimento_por_tempo(df):
+    if df.empty:
+        return go.Figure().update_layout(title="Sem dados", height=300)
+
+    base = df["tempo_cluster"].value_counts().reset_index()
+    base.columns = ["tempo_cluster", "pessoas"]
+
+    fig = px.bar(
+        base,
+        x="tempo_cluster",
+        y="pessoas",
+        color="tempo_cluster",
+        category_orders={
+            "tempo_cluster": ["imediato", "curto", "medio", "longo", "desconhecido"],
+        },
+        labels={"tempo_cluster": "Tempo de Retorno", "pessoas": "Pessoas"},
+        title="Retornos por Categoria de Tempo",
+        color_discrete_sequence=["#1f5eff", "#3b82f6", "#60a5fa", "#93c5fd", "#d1d5db"],
+    )
+    fig.update_layout(height=400, title_font_size=18, showlegend=False)
+    fig.update_traces(texttemplate="%{y:,}", textposition="outside")
+    return fig
+
+
+# =====================================================
+# CARREIRAS INDIVIDUAIS - Top pessoas
+# =====================================================
+def fig_top_pessoas(dff_mov, top_n=20):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    top = dff_mov["pessoa"].value_counts().head(top_n).reset_index()
+    top.columns = ["pessoa", "quantidade"]
+
+    fig = px.bar(
+        top,
+        x="quantidade",
+        y="pessoa",
+        orientation="h",
+        labels={"quantidade": "Atos", "pessoa": "Pessoa"},
+        title=f"Top {top_n} Pessoas com Mais Movimentações",
+        color="quantidade",
+        color_continuous_scale="Blues",
+    )
+    fig.update_layout(height=max(400, top_n * 22), title_font_size=18, yaxis=dict(autorange="reversed"))
+    fig.update_traces(texttemplate="%{x:,}", textposition="outside")
+    return fig
+
+
+def fig_trajetoria_pessoa(dff_mov, pessoa_nome):
+    if dff_mov.empty or not pessoa_nome:
+        return go.Figure().update_layout(title="Selecione uma pessoa")
+
+    traj = dff_mov[dff_mov["pessoa"] == pessoa_nome].copy()
+    if traj.empty:
+        return go.Figure().update_layout(title=f"Sem dados para {pessoa_nome}")
+
+    traj = traj.dropna(subset=["data_movimentacao"]).sort_values("data_movimentacao")
+    traj["sequencia"] = range(1, len(traj) + 1)
+    traj["cor"] = traj["tipo_ato"].map({"nomeacao": "#287c5a", "exoneracao": "#b4423c"})
+
+    fig = go.Figure()
+    for _, row in traj.iterrows():
+        cor = row.get("cor", "#888")
+        fig.add_trace(go.Scatter(
+            x=[row["data_movimentacao"]],
+            y=[row["sequencia"]],
+            mode="markers+text",
+            marker=dict(size=12, color=cor, line=dict(color="black", width=1)),
+            text=row["tipo_ato"][:4],
+            textposition="middle right",
+            textfont=dict(size=9, color=cor),
+            showlegend=False,
+            hovertemplate=(
+                f"Data: %{{x|%d/%m/%Y}}<br>"
+                f"Tipo: {row['tipo_ato']}<br>"
+                f"Órgão: {row.get('orgao', 'N/I')}<br>"
+                f"<extra></extra>"
+            ),
+        ))
+
+    fig.update_layout(
+        title=f"Trajetória de {pessoa_nome} ({len(traj)} atos)",
+        xaxis_title="Data", yaxis_title="Sequência de atos",
+        height=400, title_font_size=16,
+        yaxis=dict(dtick=1),
+    )
+    return fig
+
+
+# =====================================================
+# INDICACAO VS CARREIRA
+# =====================================================
+def fig_indicacao_vs_carreira(dff_mov):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["autoria_ato", "ano"]).copy()
+    base["ano"] = base["ano"].astype(int)
+
+    serie = base.groupby(["ano", "autoria_ato"], observed=True).size().reset_index(name="quantidade")
+
+    fig = px.area(
+        serie,
+        x="ano",
+        y="quantidade",
+        color="autoria_ato",
+        labels={"ano": "Ano", "quantidade": "Atos", "autoria_ato": "Autoria"},
+        title="Evolução: Indicação Política vs Carreira por Ano",
+        category_orders={"autoria_ato": ["Governador", "Secretaria/Subsecretaria", "Outro/Nao identificado"]},
+    )
+    fig.update_layout(height=450, title_font_size=18, hovermode="x unified")
+    return fig
+
+
+def fig_indicacao_por_governo(dff_mov):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["autoria_ato", "representante_governo"]).copy()
+
+    agrupado = base.groupby(["representante_governo", "autoria_ato"], observed=True).size().reset_index(name="quantidade")
+    total_por_governo = agrupado.groupby("representante_governo", observed=True)["quantidade"].sum()
+    agrupado["pct"] = agrupado.apply(
+        lambda r: r["quantidade"] / total_por_governo[r["representante_governo"]] * 100, axis=1
+    )
+
+    fig = px.bar(
+        agrupado,
+        x="representante_governo",
+        y="pct",
+        color="autoria_ato",
+        barmode="stack",
+        category_orders={"autoria_ato": ["Governador", "Secretaria/Subsecretaria", "Outro/Nao identificado"]},
+        labels={"representante_governo": "Governo", "pct": "Percentual", "autoria_ato": "Autoria"},
+        title="Composição de Autoria por Governo",
+    )
+    fig.update_layout(height=450, title_font_size=18)
+    fig.update_traces(texttemplate="%{y:.1f}%", textposition="inside", textfont_size=10)
+    return fig
+
+
+# =====================================================
+# ANOMALIAS
+# =====================================================
+def fig_anomalias_por_ano(dff_mov):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["ano"]).copy()
+    base["ano"] = base["ano"].astype(int)
+
+    serie = base.groupby("ano").size().reset_index(name="quantidade")
+    media = serie["quantidade"].mean()
+    desvio = serie["quantidade"].std()
+
+    serie["anomalia"] = serie["quantidade"].apply(
+        lambda x: "Acima" if x > media + 2 * desvio else ("Abaixo" if x < media - 2 * desvio else "Normal")
+    )
+
+    fig = px.bar(
+        serie,
+        x="ano",
+        y="quantidade",
+        color="anomalia",
+        color_discrete_map={"Normal": "#94a3b8", "Acima": "#ef4444", "Abaixo": "#3b82f6"},
+        labels={"ano": "Ano", "quantidade": "Atos", "anomalia": "Classificação"},
+        title=f"Anomalias por Ano (média={media:.0f}, desvio={desvio:.0f}, limites=±2σ)",
+    )
+    fig.add_hline(y=media, line_dash="dash", line_color="#64748b",
+                  annotation_text=f"Média {media:.0f}", annotation_position="bottom right")
+    fig.add_hrect(y0=media - 2 * desvio, y1=media + 2 * desvio,
+                  fillcolor="green", opacity=0.05, line_width=0)
+    fig.update_layout(height=450, title_font_size=18, bargap=0.15)
+    fig.update_traces(texttemplate="%{y:,}", textposition="outside", textfont_size=9)
+    return fig
+
+
+def fig_anomalias_orgaos(dff_mov, top_n=15):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["orgao"]).copy()
+    base["orgao"] = base["orgao"].astype(str).str.strip()
+    base = base[base["orgao"] != ""]
+
+    total = base.groupby("orgao", observed=True).size()
+    media_t = total.mean()
+    desvio_t = total.std()
+
+    anomalos = total[(total > media_t + 3 * desvio_t) | (total < media_t - 3 * desvio_t)].head(top_n)
+    if anomalos.empty:
+        anomalos = total.sort_values(ascending=False).head(top_n)
+
+    df_plot = anomalos.reset_index()
+    df_plot.columns = ["orgao", "quantidade"]
+    df_plot["cor"] = df_plot["quantidade"].apply(
+        lambda x: "Acima do esperado" if x > media_t + 3 * desvio_t else "Normal"
+    )
+
+    fig = px.bar(
+        df_plot,
+        x="quantidade",
+        y="orgao",
+        color="cor",
+        orientation="h",
+        color_discrete_map={"Acima do esperado": "#ef4444", "Normal": "#94a3b8"},
+        labels={"quantidade": "Atos", "orgao": "Órgão", "cor": ""},
+        title=f"Órgãos com Volume Atípico (Top {top_n})",
+    )
+    fig.update_layout(height=max(400, top_n * 24), title_font_size=18)
+    fig.update_traces(texttemplate="%{x:,}", textposition="outside")
+    return fig
+
+
+# =====================================================
+# CO-OCORRENCIA
+# =====================================================
+def fig_coccurrencias(dff_mov, top_n=20):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["data_movimentacao"]).copy()
+    base["data"] = base["data_movimentacao"].dt.strftime("%Y-%m-%d")
+
+    atos_por_data = base.groupby("data").agg(
+        pessoas=("pessoa", "nunique"),
+        total=("pessoa", "count"),
+        orgaos=("orgao", "nunique"),
+    ).reset_index().sort_values("total", ascending=False)
+
+    top = atos_por_data.head(top_n)
+
+    fig = px.scatter(
+        top,
+        x="pessoas",
+        y="total",
+        size="orgaos",
+        hover_name="data",
+        labels={"pessoas": "Pessoas únicas", "total": "Total de atos", "orgaos": "Órgãos envolvidos"},
+        title=f"Top {top_n} Edições com Maior Concentração de Atos",
+        color="orgaos",
+        color_continuous_scale="Viridis",
+    )
+    fig.update_layout(height=500, title_font_size=18)
+    return fig
+
+
+def fig_distribuicao_por_edicao(dff_mov):
+    if dff_mov.empty:
+        return go.Figure().update_layout(title="Sem dados")
+
+    base = dff_mov.dropna(subset=["data_movimentacao"]).copy()
+    base["data"] = base["data_movimentacao"].dt.strftime("%Y-%m-%d")
+
+    atos_por_data = base.groupby("data")["pessoa"].nunique().reset_index()
+    atos_por_data.columns = ["data", "pessoas"]
+
+    fig = px.histogram(
+        atos_por_data,
+        x="pessoas",
+        nbins=40,
+        labels={"pessoas": "Pessoas por edição", "count": "Frequência"},
+        title="Distribuição de Pessoas por Edição do Diário Oficial",
+        color_discrete_sequence=["#1f5eff"],
+    )
+    fig.update_layout(height=400, title_font_size=18, bargap=0.05)
+    fig.update_traces(texttemplate="%{y:,}", textposition="outside", textfont_size=9)
+
+    media = atos_por_data["pessoas"].mean()
+    mediana = atos_por_data["pessoas"].median()
+    fig.add_vline(x=media, line_dash="dash", line_color="red",
+                  annotation_text=f"Média {media:.0f}", annotation_position="top right")
+    fig.add_vline(x=mediana, line_dash="dot", line_color="green",
+                  annotation_text=f"Mediana {mediana:.0f}", annotation_position="top left")
+    return fig
 

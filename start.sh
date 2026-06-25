@@ -10,6 +10,8 @@ test -f app.py
 test -f requirements.txt
 test -f saida/analises/RJ/retornos_apos_exoneracao.csv
 test -f saida/analises/RJ/movimentacoes_pessoas.parquet
+test -f saida/consolidado/retornos.csv
+test -f saida/consolidado/movimentacoes.parquet
 
 exec gunicorn app:server \
   --bind "0.0.0.0:${PORT}" \
