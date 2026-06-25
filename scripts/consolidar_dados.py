@@ -13,7 +13,7 @@ RETORNO_COLUMNS = [
     "nome_normalizado", "data_publicacao", "data_exoneracao_anterior",
     "orgao", "cargo_assinante", "governador_edicao",
     "mudou_cargo_desde_exoneracao", "mudou_orgao_desde_exoneracao",
-    "dias_desde_exoneracao",
+    "dias_desde_exoneracao", "spacy_entidades",
 ]
 MOVIMENTACAO_COLUMNS = [
     "nome_normalizado", "data_publicacao", "tipo_ato", "orgao",
@@ -201,6 +201,10 @@ def consolidate():
 
         raw_mov["estado"] = state
         raw_ret["estado"] = state
+
+        spacy_empty = raw_ret["spacy_entidades"].fillna("").astype(str).str.strip().eq("")
+        has_per = raw_ret["spacy_entidades"].str.contains(":PER", na=False)
+        raw_ret = raw_ret[has_per | spacy_empty]
 
         mov_frames.append(process_mov(raw_mov))
         ret_frames.append(process_ret(raw_ret))
