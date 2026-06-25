@@ -5,7 +5,7 @@ import os
 from dash import Dash, Input, Output, dcc, html
 
 from analise_temporal.paginas import anomalias
-from analise_temporal.paginas import carreiras
+from analise_temporal.paginas import busca
 from analise_temporal.paginas import ciclo_politico
 from analise_temporal.paginas import cocorrencia
 from analise_temporal.paginas import dashboard
@@ -19,13 +19,13 @@ from analise_temporal.paginas import transicoes
 
 NAV_ITEMS = [
     ("/", "Visão Geral", "dashboard"),
+    ("/busca", "Busca de Pessoa", "search"),
     ("/transicoes", "Fluxo e Transições", "right-left"),
     ("/mobilidade", "Mobilidade", "trending-up"),
     ("/rotatividade", "Rotatividade por Órgão", "building"),
     ("/sazonalidade", "Sazonalidade", "calendar"),
     ("/ciclo-politico", "Ciclo Político", "bar-chart-2"),
     ("/preenchimento", "Tempo de Preenchimento", "clock"),
-    ("/carreiras", "Carreiras Individuais", "users"),
     ("/indicacao", "Indicação vs Carreira", "check-square"),
     ("/anomalias", "Anomalias", "alert-triangle"),
     ("/coccurrencia", "Co-ocorrência", "layers"),
@@ -33,13 +33,13 @@ NAV_ITEMS = [
 
 PAGES = {
     "/": (dashboard, "Visão Geral"),
+    "/busca": (busca, "Busca de Pessoa"),
     "/transicoes": (transicoes, "Fluxo e Transições"),
     "/mobilidade": (mobilidade, "Mobilidade"),
     "/rotatividade": (rotatividade, "Rotatividade por Órgão"),
     "/sazonalidade": (sazonalidade, "Sazonalidade"),
     "/ciclo-politico": (ciclo_politico, "Ciclo Político"),
     "/preenchimento": (preenchimento, "Tempo de Preenchimento"),
-    "/carreiras": (carreiras, "Carreiras Individuais"),
     "/indicacao": (indicacao, "Indicação vs Carreira"),
     "/anomalias": (anomalias, "Anomalias"),
     "/coccurrencia": (cocorrencia, "Co-ocorrência"),
@@ -47,6 +47,8 @@ PAGES = {
 
 ICONS = {
     "dashboard": "\u2302",
+    "search": "\u2315",
+    "users": "\u263c",
     "right-left": "\u2194",
     "trending-up": "\u2197",
     "building": "\u2302",
@@ -113,12 +115,16 @@ def create_sidebar():
     )
 
 
-app = Dash(__name__, suppress_callback_exceptions=True)
+app = Dash(
+    __name__,
+    suppress_callback_exceptions=True,
+    external_stylesheets=["https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"],
+)
 server = app.server
 app.title = "DOU RJ - Analise Temporal de Publicacoes"
 
 app.layout = html.Div(
-    style={"display": "flex", "minHeight": "100vh", "backgroundColor": "#f3f4f6"},
+    style={"display": "flex", "minHeight": "100vh", "backgroundColor": "#f3f4f6", "fontFamily": "Roboto, sans-serif"},
     children=[
         create_sidebar(),
         html.Div(
