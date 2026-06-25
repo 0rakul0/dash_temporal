@@ -17,7 +17,7 @@ RETORNO_COLUMNS = [
 ]
 MOVIMENTACAO_COLUMNS = [
     "nome_normalizado", "data_publicacao", "tipo_ato", "orgao",
-    "cargo_assinante", "governador_edicao",
+    "cargo", "cargo_assinante", "governador_edicao",
 ]
 CATEGORY_COLUMNS = [
     "estado", "tipo_ato", "orgao", "cargo_assinante", "autoria_ato",
@@ -26,7 +26,7 @@ CATEGORY_COLUMNS = [
 ]
 
 MOV_COLUMNS_KEEP = [
-    "estado", "ano", "tipo_ato", "orgao", "cargo_assinante", "autoria_ato",
+    "estado", "ano", "tipo_ato", "orgao", "cargo", "cargo_assinante", "autoria_ato",
     "governador_edicao", "representante_governo", "origem_representante",
     "representante_origem", "pessoa", "data_movimentacao",
 ]
