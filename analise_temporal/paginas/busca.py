@@ -130,9 +130,11 @@ def register_callbacks(app):
         orgaos = dff["orgao"].nunique()
         stats = f"{total_atos} atos | {governos} {'governos' if governos > 1 else 'governo'} | {orgaos} {'órgãos' if orgaos > 1 else 'órgão'}"
 
-        tabela_data = dff[
-            ["data_movimentacao", "tipo_ato", "orgao", "cargo_assinante", "governador_edicao"]
-        ].copy()
+        if "cargo" in dff.columns:
+            cols = ["data_movimentacao", "tipo_ato", "orgao", "cargo", "governador_edicao"]
+        else:
+            cols = ["data_movimentacao", "tipo_ato", "orgao", "cargo_assinante", "governador_edicao"]
+        tabela_data = dff[cols].copy()
         tabela_data["data_movimentacao"] = tabela_data["data_movimentacao"].dt.date
         tabela_data.columns = ["Data", "Tipo", "Órgão", "Cargo", "Governo"]
 
