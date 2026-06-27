@@ -62,55 +62,33 @@ ICONS = {
 }
 
 
+def _nav_link(path, label, icon):
+    return dcc.Link(
+        html.Div(
+            [html.Span(icon, className="nav-icon"), html.Span(label, className="nav-label")],
+            className="nav-item",
+        ),
+        href=path,
+        style={"textDecoration": "none"},
+    )
+
+
 def create_sidebar():
-    links = []
-    for path, label, icon_key in NAV_ITEMS:
-        icon = ICONS.get(icon_key, "\u25cf")
-        links.append(
-            dcc.Link(
-                html.Div(
-                    f"{icon}  {label}",
-                    style={
-                        "padding": "10px 16px",
-                        "color": "#d1d5db",
-                        "textDecoration": "none",
-                        "fontSize": "14px",
-                        "borderRadius": "6px",
-                        "transition": "background 0.15s",
-                        "cursor": "pointer",
-                    },
-                ),
-                href=path,
-                style={"textDecoration": "none"},
-            )
-        )
+    links = [_nav_link(path, label, ICONS.get(icon_key, "\u25cf")) for path, label, icon_key in NAV_ITEMS]
     return html.Div(
-        style={
-            "width": "240px",
-            "minWidth": "240px",
-            "backgroundColor": "#1f2937",
-            "color": "#f9fafb",
-            "padding": "20px 0",
-            "height": "100vh",
-            "position": "fixed",
-            "top": 0,
-            "left": 0,
-            "overflowY": "auto",
-            "display": "flex",
-            "flexDirection": "column",
-        },
+        id="sidebar",
+        className="open",
         children=[
             html.Div(
-                "DOU-RJ",
-                style={
-                    "fontSize": "20px",
-                    "fontWeight": "bold",
-                    "padding": "0 16px 20px 16px",
-                    "borderBottom": "1px solid #374151",
-                    "marginBottom": "12px",
-                },
+                [
+                    html.Span("DOU-RJ", className="sidebar-title"),
+                    html.Button("\u2630", id="sidebar-toggle",
+                                style={"background": "none", "border": "none", "color": "#f9fafb",
+                                       "fontSize": "18px", "cursor": "pointer", "padding": "0 16px"}),
+                ],
+                className="sidebar-header",
             ),
-            html.Div(links, style={"display": "flex", "flexDirection": "column", "gap": "2px"}),
+            html.Div(links, className="sidebar-links"),
         ],
     )
 
@@ -126,20 +104,58 @@ app.title = "DOU RJ - Analise Temporal de Publicacoes"
 app.layout = html.Div(
     style={"display": "flex", "minHeight": "100vh", "backgroundColor": "#f3f4f6", "fontFamily": "Roboto, sans-serif"},
     children=[
+        dcc.Store(id="sidebar-state", data="open"),
         create_sidebar(),
         html.Div(
             id="page-content",
-            style={
-                "marginLeft": "240px",
-                "flex": "1",
-                "padding": "24px",
-                "maxWidth": "calc(100% - 240px)",
-                "boxSizing": "border-box",
-            },
+            className="content-open",
+            style={"flex": "1", "padding": "24px", "boxSizing": "border-box"},
         ),
         dcc.Location(id="url", refresh="callback"),
+        html.Div(
+            id="sidebar-style",
+            children=[
+                html.Style("""
+                    #sidebar { width:240px; min-width:240px; background-color:#1f2937; color:#f9fafb;
+                               padding:20px 0; height:100vh; position:fixed; top:0; left:0; overflow-y:auto;
+                               display:flex; flex-direction:column; transition:width 0.2s ease, min-width 0.2s ease; }
+                    #sidebar.closed { width:50px; min-width:50px; }
+                    .sidebar-header { display:flex; align-items:center; gap:8px; padding:0 16px 20px 16px;
+                                      border-bottom:1px solid #374151; margin-bottom:12px; }
+                    #sidebar.closed .sidebar-header { justify-content:center; padding:0 0 20px 0; }
+                    .sidebar-title { font-size:20px; font-weight:bold; flex:1; }
+                    #sidebar.closed .sidebar-title { display:none; }
+                    .sidebar-links { display:flex; flex-direction:column; gap:2px; }
+                    #sidebar.closed .sidebar-links { align-items:center; }
+                    .nav-item { display:flex; align-items:center; gap:10px; padding:10px 16px; color:#d1d5db;
+                                border-radius:6px; cursor:pointer; white-space:nowrap; overflow:hidden;
+                                transition:background 0.15s; }
+                    .nav-item:hover { background:#374151; }
+                    #sidebar.closed .nav-item { padding:10px 0; justify-content:center; }
+                    #sidebar.closed .nav-label { display:none; }
+                    .nav-icon { font-size:16px; flex-shrink:0; }
+                    .content-open { margin-left:240px; }
+                    .content-closed { margin-left:50px; }
+                    #page-content { flex:1; padding:24px; box-sizing:border-box; transition:margin-left 0.2s ease; }
+                """)
+            ],
+        ),
     ],
 )
+
+
+@app.callback(
+    Output("sidebar", "className"),
+    Output("page-content", "className"),
+    Output("sidebar-state", "data"),
+    Input("sidebar-toggle", "n_clicks"),
+    State("sidebar-state", "data"),
+    prevent_initial_call=True,
+)
+def toggle_sidebar(_, state):
+    if state == "open":
+        return "closed", "content-closed", "closed"
+    return "open", "content-open", "open"
 
 
 @app.callback(Output("page-content", "children"), Input("url", "pathname"))
