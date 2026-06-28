@@ -5,16 +5,23 @@ Esta pasta contem uma versao enxuta do dashboard temporal para deploy no Render.
 URL publica: <https://dash-temporal.onrender.com/>
 
 Este repositorio e o ambiente de deploy. O desenvolvimento principal fica em
-`D:\github\exoneracoes_nomeacoes_dou`; aqui, atualize apenas os dados de
-consumo quando a base analitica mudar.
+`D:\github\exoneracoes_nomeacoes_dou`; a consolidacao e a limpeza dos dados
+acontecem la. Aqui, ficam apenas o app e os arquivos consolidados consumidos
+pelo dashboard.
 
 ## Arquivos incluidos
 
 - `app.py`: ponto de entrada do Dash.
 - `requirements.txt`: dependencias necessarias para rodar o painel.
 - `analise_temporal/`: modulos usados pelo dashboard em tempo de execucao.
-- `saida/analises/RJ/retornos_apos_exoneracao.csv`: base de retornos.
-- `saida/analises/RJ/movimentacoes_pessoas.parquet`: base de movimentacoes.
+- `saida/consolidado/retornos.parquet`: base consolidada de retornos.
+- `saida/consolidado/movimentacoes.parquet`: base consolidada de movimentacoes.
+
+## Fluxo de dados
+
+Quando a base analitica mudar no projeto principal, copie apenas os arquivos de
+`saida/consolidado/` para este repositorio antes do deploy ou da sincronizacao
+com o GitHub.
 
 ## Render
 

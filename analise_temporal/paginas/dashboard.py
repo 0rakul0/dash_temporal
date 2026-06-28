@@ -205,7 +205,7 @@ def reload_bar():
         style={"display": "flex", "alignItems": "center", "gap": "12px", "marginBottom": "16px"},
         children=[
             html.Button(
-                "Recarregar base",
+                "Recarregar consolidado",
                 id="recarregar_base",
                 n_clicks=0,
                 style={
@@ -519,8 +519,8 @@ def register_callbacks(app):
     def update(recarregar_clicks, estado, ano, governador_edicao, orgao, autoria, tipo_ato):
         reload_status = ""
         if recarregar_clicks and ctx.triggered_id == "recarregar_base":
-            dados.df, dados.df_mov = dados.reload_analysis_base()
-            reload_status = f"Base recarregada: {len(dados.df_mov):,} movimentacoes".replace(",", ".")
+            dados.df, dados.df_mov = dados.reload_consolidated_base()
+            reload_status = f"Consolidado recarregado: {len(dados.df_mov):,} movimentacoes".replace(",", ".")
 
         dff_mov = dados.df_mov.copy()
 

@@ -5,6 +5,7 @@ rem Executa sempre a partir da pasta onde este arquivo esta localizado.
 cd /d "%~dp0"
 
 set "REPO=%CD%"
+set "MAIN_REPO=D:\github\exoneracoes_nomeacoes_dou"
 set "LOG_DIR=%LOCALAPPDATA%\dash_temporal"
 set "LOG_FILE=%LOG_DIR%\git_sync.log"
 set "LOCK_DIR=%TEMP%\dash_temporal_git_sync.lock"
@@ -28,6 +29,7 @@ exit /b %RESULTADO%
 echo.
 echo ============================================================
 echo [%date% %time%] Iniciando sincronizacao de "%REPO%"
+echo Projeto principal: %MAIN_REPO%
 
 where git >nul 2>&1
 if errorlevel 1 (
@@ -49,11 +51,38 @@ if not defined BRANCH (
 
 echo Branch: %BRANCH%
 
-echo Consolidando dados antes da sincronizacao...
-python scripts\consolidar_dados.py
-if errorlevel 1 (
-    echo ERRO: falha ao consolidar os dados.
+if not exist "%MAIN_REPO%\saida\consolidado\movimentacoes.parquet" (
+    echo ERRO: consolidado de movimentacoes nao encontrado no projeto principal.
     exit /b 40
+)
+
+if not exist "%MAIN_REPO%\saida\consolidado\retornos.parquet" (
+    echo ERRO: consolidado de retornos nao encontrado no projeto principal.
+    exit /b 41
+)
+
+if not exist "saida\consolidado" mkdir "saida\consolidado"
+
+echo Copiando consolidado do projeto principal...
+copy /Y "%MAIN_REPO%\saida\consolidado\movimentacoes.parquet" "saida\consolidado\movimentacoes.parquet" >nul
+if errorlevel 1 (
+    echo ERRO: falha ao copiar movimentacoes.parquet.
+    exit /b 42
+)
+
+copy /Y "%MAIN_REPO%\saida\consolidado\retornos.parquet" "saida\consolidado\retornos.parquet" >nul
+if errorlevel 1 (
+    echo ERRO: falha ao copiar retornos.parquet.
+    exit /b 43
+)
+
+if exist "saida\analises" (
+    echo Removendo dados brutos legados de saida\analises...
+    rmdir /S /Q "saida\analises"
+    if errorlevel 1 (
+        echo ERRO: falha ao remover saida\analises.
+        exit /b 44
+    )
 )
 
 git add -A
