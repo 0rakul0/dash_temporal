@@ -27,6 +27,58 @@ NAV_ITEMS = [
     {"endpoint": "alertas_page", "label": "Alertas", "icon": "bell"},
 ]
 
+PAGE_SHELL = {
+    "nomeacoes": {
+        "template": "nomeacoes.html",
+        "title": "Nomeacoes",
+        "heading": "Nomeacoes mais recentes",
+        "description": "Leitura direta das entradas publicadas no consolidado enviado pelo projeto fonte.",
+        "active_endpoint": "nomeacoes_page",
+    },
+    "exoneracoes": {
+        "template": "exoneracoes.html",
+        "title": "Exoneracoes",
+        "heading": "Exoneracoes mais recentes",
+        "description": "Painel de saidas com foco em volume, destino institucional e recorrencia recente.",
+        "active_endpoint": "exoneracoes_page",
+    },
+    "orgaos": {
+        "template": "orgaos.html",
+        "title": "Orgaos & Secretarias",
+        "heading": "Orgaos com maior movimentacao",
+        "description": "Comparativo entre entradas e saidas por orgao para localizar concentracao administrativa.",
+        "active_endpoint": "orgaos_page",
+    },
+    "servidores": {
+        "template": "servidores.html",
+        "title": "Servidores",
+        "heading": "Busca de servidores e trajetorias",
+        "description": "Pesquise pelo nome para acompanhar a trajetoria completa da pessoa e veja quais servidores aparecem com mais recorrencia no consolidado.",
+        "active_endpoint": "servidores_page",
+    },
+    "publicacoes": {
+        "template": "publicacoes.html",
+        "title": "Publicacoes",
+        "heading": "Cadencia de publicacoes",
+        "description": "Visao por mes e por dia para acompanhar ritmo de publicacao no Diario Oficial.",
+        "active_endpoint": "publicacoes_page",
+    },
+    "downloads": {
+        "template": "downloads.html",
+        "title": "Downloads",
+        "heading": "Arquivos entregues ao dash_temporal",
+        "description": "Esta camada nao processa dados brutos; apenas disponibiliza o consolidado que chega do projeto principal.",
+        "active_endpoint": "downloads_page",
+    },
+    "alertas": {
+        "template": "alertas.html",
+        "title": "Alertas",
+        "heading": "Sinais de variacao recente",
+        "description": "Comparacao simples entre os ultimos 30 dias e a janela imediatamente anterior para orientar acompanhamento.",
+        "active_endpoint": "alertas_page",
+    },
+}
+
 
 @dataclass(frozen=True)
 class DashboardBounds:
@@ -72,6 +124,7 @@ _NOISE_PAT = re.compile(
 _people_index: list[str] = []
 _people_vectorizer: TfidfVectorizer | None = None
 _people_matrix = None
+page_payload_cache: dict[str, dict[str, object]] = {}
 
 
 def _fold(value: str) -> str:
@@ -687,17 +740,17 @@ def _downloads_context() -> dict[str, object]:
         {
             "label": "movimentacoes.parquet",
             "description": "Base principal consumida pelo painel, com nomeacoes e exoneracoes consolidadas.",
-            "href": url_for("download_data", dataset="movimentacoes"),
+            "href": "/download/movimentacoes",
         },
         {
             "label": "retornos.parquet",
             "description": "Relacionamentos e retornos usados para leituras temporais complementares.",
-            "href": url_for("download_data", dataset="retornos"),
+            "href": "/download/retornos",
         },
         {
             "label": "Resumo JSON da home",
             "description": "Exportacao rapida do resumo atual para validacao externa.",
-            "href": url_for("api_dashboard"),
+            "href": "/api/dashboard",
         },
     ]
     return {
@@ -752,34 +805,62 @@ def _alertas_context() -> dict[str, object]:
     }
 
 
+def _refresh_page_payload_cache() -> None:
+    global page_payload_cache
+    page_payload_cache = {
+        "nomeacoes": _nomeacoes_context(),
+        "exoneracoes": _exoneracoes_context(),
+        "orgaos": _orgaos_context(),
+        "servidores": _servidores_context(),
+        "publicacoes": _publicacoes_context(),
+        "downloads": _downloads_context(),
+        "alertas": _alertas_context(),
+    }
+
+
+def _render_page_shell(page_key: str):
+    meta = PAGE_SHELL[page_key]
+    return render_template(
+        meta["template"],
+        page_key=page_key,
+        page_title=meta["title"],
+        page_heading=meta["heading"],
+        page_description=meta["description"],
+        active_endpoint=meta["active_endpoint"],
+    )
+
+
 @app.context_processor
 def inject_shell_defaults():
     return {"nav_items": NAV_ITEMS, "sidebar_status": _sidebar_status()}
 
 
+_refresh_page_payload_cache()
+
+
 @app.get("/")
 def index():
-    return render_template("index.html", page_title="Visao Geral", active_endpoint="index")
+    return render_template("index.html", page_title="Visao Geral", active_endpoint="index", page_key="index")
 
 
 @app.get("/nomeacoes")
 def nomeacoes_page():
-    return render_template("nomeacoes.html", active_endpoint="nomeacoes_page", **_nomeacoes_context())
+    return _render_page_shell("nomeacoes")
 
 
 @app.get("/exoneracoes")
 def exoneracoes_page():
-    return render_template("exoneracoes.html", active_endpoint="exoneracoes_page", **_exoneracoes_context())
+    return _render_page_shell("exoneracoes")
 
 
 @app.get("/orgaos")
 def orgaos_page():
-    return render_template("orgaos.html", active_endpoint="orgaos_page", **_orgaos_context())
+    return _render_page_shell("orgaos")
 
 
 @app.get("/servidores")
 def servidores_page():
-    return render_template("servidores.html", active_endpoint="servidores_page", **_servidores_context())
+    return _render_page_shell("servidores")
 
 
 @app.get("/trajetorias")
@@ -789,17 +870,17 @@ def trajetorias_page():
 
 @app.get("/publicacoes")
 def publicacoes_page():
-    return render_template("publicacoes.html", active_endpoint="publicacoes_page", **_publicacoes_context())
+    return _render_page_shell("publicacoes")
 
 
 @app.get("/downloads")
 def downloads_page():
-    return render_template("downloads.html", active_endpoint="downloads_page", **_downloads_context())
+    return _render_page_shell("downloads")
 
 
 @app.get("/alertas")
 def alertas_page():
-    return render_template("alertas.html", active_endpoint="alertas_page", **_alertas_context())
+    return _render_page_shell("alertas")
 
 
 @app.get("/download/<dataset>")
@@ -830,6 +911,14 @@ def api_dashboard():
     return jsonify(_dashboard_payload(start, end, tipos, orgaos, cargos, governos))
 
 
+@app.get("/api/page/<page_key>")
+def api_page_payload(page_key: str):
+    payload = page_payload_cache.get(page_key)
+    if payload is None:
+        abort(404)
+    return jsonify(payload)
+
+
 @app.get("/api/pessoas/search")
 def api_people_search():
     query = _empty_to_none(request.args.get("q")) or ""
@@ -848,6 +937,7 @@ def api_reload():
     dados.df, dados.df_mov = dados.reload_consolidated_base()
     df_dashboard, dashboard_bounds = _load_dashboard_data()
     _refresh_people_index()
+    _refresh_page_payload_cache()
     return jsonify(
         {
             "status": "ok",

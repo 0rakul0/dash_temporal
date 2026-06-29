@@ -8,14 +8,7 @@
     </div>
   </section>
 
-  <section class="page-summary-grid page-summary-grid-compact">
-    {% for card in summary_cards %}
-      <article class="panel summary-card">
-        <span>{{ card.label }}</span>
-        <strong>{{ card.value }}</strong>
-      </article>
-    {% endfor %}
-  </section>
+  <section class="page-summary-grid page-summary-grid-compact" id="summary-grid"></section>
 
   <section class="page-grid-two">
     <article class="panel">
@@ -32,16 +25,7 @@
               <th>Variacao</th>
             </tr>
           </thead>
-          <tbody>
-            {% for row in alert_rows %}
-              <tr>
-                <td>{{ row.orgao }}</td>
-                <td>{{ row.recentes|int }}</td>
-                <td>{{ row.anteriores|int }}</td>
-                <td>{{ row.variacao|int }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
+          <tbody id="alert-body"></tbody>
         </table>
       </div>
     </article>
@@ -50,19 +34,11 @@
       <div class="panel-header">
         <h2>Atos recentes na janela</h2>
       </div>
-      <div class="timeline-list">
-        {% for row in timeline_rows %}
-          <article class="timeline-item {{ row.tipo.lower() }}">
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <strong>{{ row.tipo }}</strong>
-              <p>{{ row.cargo }}</p>
-              <p>{{ row.orgao }}</p>
-              <span class="timeline-date">{{ row.data }}</span>
-            </div>
-          </article>
-        {% endfor %}
-      </div>
+      <div class="timeline-list" id="timeline-list"></div>
     </article>
   </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/page-data.js') }}"></script>
 {% endblock %}

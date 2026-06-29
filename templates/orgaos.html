@@ -8,14 +8,7 @@
     </div>
   </section>
 
-  <section class="page-summary-grid">
-    {% for card in summary_cards %}
-      <article class="panel summary-card">
-        <span>{{ card.label }}</span>
-        <strong>{{ card.value }}</strong>
-      </article>
-    {% endfor %}
-  </section>
+  <section class="page-summary-grid" id="summary-grid"></section>
 
   <section class="page-grid-two">
     <article class="panel">
@@ -33,17 +26,7 @@
               <th>Atos</th>
             </tr>
           </thead>
-          <tbody>
-            {% for row in ranking_rows %}
-              <tr>
-                <td>{{ row.orgao }}</td>
-                <td>{{ row.nomeacoes }}</td>
-                <td>{{ row.exoneracoes }}</td>
-                <td>{{ row.saldo }}</td>
-                <td>{{ row.atos }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
+          <tbody id="ranking-body"></tbody>
         </table>
       </div>
     </article>
@@ -52,14 +35,11 @@
       <div class="panel-header">
         <h2>Meses mais intensos</h2>
       </div>
-      <div class="list-stack">
-        {% for row in recent_rows %}
-          <div class="list-row">
-            <strong>{{ row.orgao }}</strong>
-            <span>{{ row.ano_mes }} | {{ row.total }} atos</span>
-          </div>
-        {% endfor %}
-      </div>
+      <div class="list-stack" id="recent-list"></div>
     </article>
   </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/page-data.js') }}"></script>
 {% endblock %}

@@ -3,7 +3,6 @@ const clearButton = document.getElementById("person-search-clear");
 const resultsHost = document.getElementById("person-search-results");
 const trajectoryHost = document.getElementById("person-trajectory-panel");
 const statsHost = document.getElementById("person-search-stats");
-const shortcutButtons = document.querySelectorAll(".person-shortcut");
 
 if (personInput && clearButton && resultsHost && trajectoryHost && statsHost) {
   let activeRequest = 0;
@@ -172,11 +171,13 @@ if (personInput && clearButton && resultsHost && trajectoryHost && statsHost) {
     loadTrajectory(button.dataset.name || "");
   });
 
-  shortcutButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      loadTrajectory(button.dataset.person || "");
-      button.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
+  document.addEventListener("click", (event) => {
+    const shortcut = event.target.closest(".person-shortcut");
+    if (!shortcut) {
+      return;
+    }
+    loadTrajectory(shortcut.dataset.person || "");
+    shortcut.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
   const params = new URLSearchParams(window.location.search);

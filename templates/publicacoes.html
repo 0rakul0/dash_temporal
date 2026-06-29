@@ -8,14 +8,7 @@
     </div>
   </section>
 
-  <section class="page-summary-grid">
-    {% for card in summary_cards %}
-      <article class="panel summary-card">
-        <span>{{ card.label }}</span>
-        <strong>{{ card.value }}</strong>
-      </article>
-    {% endfor %}
-  </section>
+  <section class="page-summary-grid" id="summary-grid"></section>
 
   <section class="page-grid-two">
     <article class="panel">
@@ -32,16 +25,7 @@
               <th>Exoneracoes</th>
             </tr>
           </thead>
-          <tbody>
-            {% for row in publication_rows %}
-              <tr>
-                <td>{{ row.ano_mes }}</td>
-                <td>{{ row.atos }}</td>
-                <td>{{ row.nomeacoes }}</td>
-                <td>{{ row.exoneracoes }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
+          <tbody id="publication-body"></tbody>
         </table>
       </div>
     </article>
@@ -50,14 +34,11 @@
       <div class="panel-header">
         <h2>Dias com maior densidade</h2>
       </div>
-      <div class="list-stack">
-        {% for row in day_rows %}
-          <div class="list-row">
-            <strong>{{ row.data_movimentacao }}</strong>
-            <span>{{ row.total }} atos</span>
-          </div>
-        {% endfor %}
-      </div>
+      <div class="list-stack" id="day-list"></div>
     </article>
   </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/page-data.js') }}"></script>
 {% endblock %}

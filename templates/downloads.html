@@ -8,22 +8,11 @@
     </div>
   </section>
 
-  <section class="page-summary-grid page-summary-grid-compact">
-    {% for card in summary_cards %}
-      <article class="panel summary-card">
-        <span>{{ card.label }}</span>
-        <strong>{{ card.value }}</strong>
-      </article>
-    {% endfor %}
-  </section>
+  <section class="page-summary-grid page-summary-grid-compact" id="summary-grid"></section>
 
-  <section class="download-grid">
-    {% for row in download_rows %}
-      <article class="panel download-card">
-        <h2>{{ row.label }}</h2>
-        <p>{{ row.description }}</p>
-        <a class="primary-button button-link" href="{{ row.href }}">Abrir arquivo</a>
-      </article>
-    {% endfor %}
-  </section>
+  <section class="download-grid" id="downloads-grid"></section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/page-data.js') }}"></script>
 {% endblock %}

@@ -8,14 +8,7 @@
     </div>
   </section>
 
-  <section class="page-summary-grid">
-    {% for card in summary_cards %}
-      <article class="panel summary-card">
-        <span>{{ card.label }}</span>
-        <strong>{{ card.value }}</strong>
-      </article>
-    {% endfor %}
-  </section>
+  <section class="page-summary-grid" id="summary-grid"></section>
 
   <section class="page-grid-two">
     <article class="panel">
@@ -33,17 +26,7 @@
               <th>Governo</th>
             </tr>
           </thead>
-          <tbody>
-            {% for row in table_rows %}
-              <tr>
-                <td>{{ row.data }}</td>
-                <td>{{ row.pessoa }}</td>
-                <td>{{ row.orgao }}</td>
-                <td>{{ row.cargo }}</td>
-                <td>{{ row.governo }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
+          <tbody id="recent-table-body"></tbody>
         </table>
       </div>
     </article>
@@ -52,14 +35,11 @@
       <div class="panel-header">
         <h2>Orgaos com mais entradas</h2>
       </div>
-      <div class="list-stack">
-        {% for row in orgao_rows %}
-          <div class="list-row">
-            <strong>{{ row.orgao }}</strong>
-            <span>{{ row.total }} nomeacoes</span>
-          </div>
-        {% endfor %}
-      </div>
+      <div class="list-stack" id="orgao-list"></div>
     </article>
   </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/page-data.js') }}"></script>
 {% endblock %}
