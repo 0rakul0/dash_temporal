@@ -140,6 +140,37 @@ def _norm_text(value: object) -> str:
     return _fold(text).lower()
 
 
+def _orgao_group_key(value: object) -> str:
+    text = _norm_text(value)
+    if not text:
+        return ""
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    text = re.sub(r"\bde\s+tran\b", "detran", text)
+    text = re.sub(r"\bdetran\s*rj\b", "detran rj", text)
+    text = re.sub(r"\bdetro\s*rj\b", "detro rj", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _orgao_display_labels(frame: pd.DataFrame) -> dict[str, str]:
+    valid = frame[frame["orgao"] != ""].copy()
+    if valid.empty:
+        return {}
+
+    valid["orgao_key"] = valid["orgao"].map(_orgao_group_key)
+    labels: dict[str, str] = {}
+    for key, group in valid.groupby("orgao_key", dropna=False, sort=False, observed=False):
+        if not key:
+            continue
+        ranked = (
+            group.groupby("orgao")
+            .size()
+            .reset_index(name="total")
+            .sort_values(["total", "orgao"], ascending=[False, True])
+        )
+        labels[key] = str(ranked.iloc[0]["orgao"])
+    return labels
+
+
 def _is_noise(name: str) -> bool:
     cleaned = str(name or "").strip()
     if len(cleaned) < 8:
@@ -782,8 +813,11 @@ def _alertas_context() -> dict[str, object]:
 
     recent_people = _valid_people(recent)
     previous_people = _valid_people(previous)
-    recent_counts = recent_people[recent_people["orgao"] != ""].groupby("orgao")["pessoa"].nunique()
-    previous_counts = previous_people[previous_people["orgao"] != ""].groupby("orgao")["pessoa"].nunique()
+    recent_people["orgao_key"] = recent_people["orgao"].map(_orgao_group_key)
+    previous_people["orgao_key"] = previous_people["orgao"].map(_orgao_group_key)
+    label_map = _orgao_display_labels(pd.concat([recent_people, previous_people], ignore_index=True))
+    recent_counts = recent_people[recent_people["orgao_key"] != ""].groupby("orgao_key")["pessoa"].nunique()
+    previous_counts = previous_people[previous_people["orgao_key"] != ""].groupby("orgao_key")["pessoa"].nunique()
     delta = (
         pd.DataFrame({"recentes": recent_counts, "anteriores": previous_counts})
         .fillna(0)
@@ -791,8 +825,9 @@ def _alertas_context() -> dict[str, object]:
         .sort_values("variacao", ascending=False)
         .head(12)
         .reset_index()
-        .rename(columns={"index": "orgao"})
+        .rename(columns={"index": "orgao_key"})
     )
+    delta["orgao"] = delta["orgao_key"].map(label_map).fillna(delta["orgao_key"])
 
     return {
         "page_title": "Alertas",

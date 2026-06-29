@@ -165,7 +165,13 @@ function renderAlertasPage(payload) {
       .map(
         (row) => {
           const variation = parseInt(row.variacao, 10) || 0;
-          const variationLabel = variation > 0 ? `+${variation}` : String(variation);
+          let variationLabel = "Sem mudanca no volume de pessoas";
+          if (variation > 0) {
+            variationLabel = `Aumento de ${variation} pessoa${variation === 1 ? "" : "s"}`;
+          } else if (variation < 0) {
+            const decrease = Math.abs(variation);
+            variationLabel = `Reducao de ${decrease} pessoa${decrease === 1 ? "" : "s"}`;
+          }
           return `
           <tr>
             <td>${escapeHtml(row.orgao)}</td>
