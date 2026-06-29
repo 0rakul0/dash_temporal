@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import unicodedata
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import pandas as pd
@@ -124,7 +125,6 @@ _NOISE_PAT = re.compile(
 _people_index: list[str] = []
 _people_vectorizer: TfidfVectorizer | None = None
 _people_matrix = None
-page_payload_cache: dict[str, dict[str, object]] = {}
 
 
 def _fold(value: str) -> str:
@@ -315,7 +315,8 @@ def _current_governor_name(frame: pd.DataFrame) -> str:
 
 
 def _current_frame() -> pd.DataFrame:
-    return df_dashboard.copy()
+    # Reuse the shared base frame and only copy at mutation points.
+    return df_dashboard
 
 
 def _sidebar_status() -> dict[str, str]:
@@ -805,17 +806,15 @@ def _alertas_context() -> dict[str, object]:
     }
 
 
-def _refresh_page_payload_cache() -> None:
-    global page_payload_cache
-    page_payload_cache = {
-        "nomeacoes": _nomeacoes_context(),
-        "exoneracoes": _exoneracoes_context(),
-        "orgaos": _orgaos_context(),
-        "servidores": _servidores_context(),
-        "publicacoes": _publicacoes_context(),
-        "downloads": _downloads_context(),
-        "alertas": _alertas_context(),
-    }
+PAGE_PAYLOAD_BUILDERS: dict[str, Callable[[], dict[str, object]]] = {
+    "nomeacoes": _nomeacoes_context,
+    "exoneracoes": _exoneracoes_context,
+    "orgaos": _orgaos_context,
+    "servidores": _servidores_context,
+    "publicacoes": _publicacoes_context,
+    "downloads": _downloads_context,
+    "alertas": _alertas_context,
+}
 
 
 def _render_page_shell(page_key: str):
@@ -833,9 +832,6 @@ def _render_page_shell(page_key: str):
 @app.context_processor
 def inject_shell_defaults():
     return {"nav_items": NAV_ITEMS, "sidebar_status": _sidebar_status()}
-
-
-_refresh_page_payload_cache()
 
 
 @app.get("/")
@@ -913,10 +909,10 @@ def api_dashboard():
 
 @app.get("/api/page/<page_key>")
 def api_page_payload(page_key: str):
-    payload = page_payload_cache.get(page_key)
-    if payload is None:
+    builder = PAGE_PAYLOAD_BUILDERS.get(page_key)
+    if builder is None:
         abort(404)
-    return jsonify(payload)
+    return jsonify(builder())
 
 
 @app.get("/api/pessoas/search")
@@ -937,7 +933,6 @@ def api_reload():
     dados.df, dados.df_mov = dados.reload_consolidated_base()
     df_dashboard, dashboard_bounds = _load_dashboard_data()
     _refresh_people_index()
-    _refresh_page_payload_cache()
     return jsonify(
         {
             "status": "ok",
