@@ -75,7 +75,7 @@ PAGE_SHELL = {
         "template": "alertas.html",
         "title": "Alertas",
         "heading": "Sinais de variacao recente",
-        "description": "Comparacao simples entre os ultimos 30 dias e a janela imediatamente anterior para orientar acompanhamento.",
+        "description": "Compare pessoas unicas por orgao entre os ultimos 30 dias e a janela imediatamente anterior para ver onde entrou ou saiu mais gente.",
         "active_endpoint": "alertas_page",
     },
 }
@@ -780,8 +780,10 @@ def _alertas_context() -> dict[str, object]:
         (frame["data_movimentacao"] >= previous_start) & (frame["data_movimentacao"] < recent_start)
     ].copy()
 
-    recent_counts = recent[recent["orgao"] != ""].groupby("orgao").size()
-    previous_counts = previous[previous["orgao"] != ""].groupby("orgao").size()
+    recent_people = _valid_people(recent)
+    previous_people = _valid_people(previous)
+    recent_counts = recent_people[recent_people["orgao"] != ""].groupby("orgao")["pessoa"].nunique()
+    previous_counts = previous_people[previous_people["orgao"] != ""].groupby("orgao")["pessoa"].nunique()
     delta = (
         pd.DataFrame({"recentes": recent_counts, "anteriores": previous_counts})
         .fillna(0)
@@ -795,11 +797,11 @@ def _alertas_context() -> dict[str, object]:
     return {
         "page_title": "Alertas",
         "page_heading": "Sinais de variacao recente",
-        "page_description": "Comparacao simples entre os ultimos 30 dias e a janela imediatamente anterior para orientar acompanhamento.",
+        "page_description": "Compare pessoas unicas por orgao entre os ultimos 30 dias e a janela imediatamente anterior para ver onde entrou ou saiu mais gente.",
         "summary_cards": [
-            {"label": "Atos nos ultimos 30 dias", "value": _format_int(len(recent))},
+            {"label": "Pessoas unicas nos ultimos 30 dias", "value": _format_int(recent_people["pessoa"].nunique())},
             {"label": "Janela comparada", "value": f"{recent_start.strftime('%d/%m/%Y')} ate {latest.strftime('%d/%m/%Y')}"},
-            {"label": "Orgaos com alta", "value": _format_int(int((delta['variacao'] > 0).sum())) if not delta.empty else "0"},
+            {"label": "Orgaos com mais gente", "value": _format_int(int((delta['variacao'] > 0).sum())) if not delta.empty else "0"},
         ],
         "alert_rows": delta.to_dict("records"),
         "timeline_rows": _timeline_payload(recent, limit=10),

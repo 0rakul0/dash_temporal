@@ -163,14 +163,18 @@ function renderAlertasPage(payload) {
   if (host) {
     host.innerHTML = (payload.alert_rows || [])
       .map(
-        (row) => `
+        (row) => {
+          const variation = parseInt(row.variacao, 10) || 0;
+          const variationLabel = variation > 0 ? `+${variation}` : String(variation);
+          return `
           <tr>
             <td>${escapeHtml(row.orgao)}</td>
             <td>${escapeHtml(String(parseInt(row.recentes, 10) || 0))}</td>
             <td>${escapeHtml(String(parseInt(row.anteriores, 10) || 0))}</td>
-            <td>${escapeHtml(String(parseInt(row.variacao, 10) || 0))}</td>
+            <td>${escapeHtml(variationLabel)}</td>
           </tr>
-        `,
+        `;
+        },
       )
       .join("");
   }
