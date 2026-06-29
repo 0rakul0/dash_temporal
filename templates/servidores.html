@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="page-hero">
+    <div>
+      <h1>{{ page_heading }}</h1>
+      <p>{{ page_description }}</p>
+    </div>
+  </section>
+
+  <section class="page-summary-grid">
+    {% for card in summary_cards %}
+      <article class="panel summary-card">
+        <span>{{ card.label }}</span>
+        <strong>{{ card.value }}</strong>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="panel server-search-panel">
+    <div class="panel-header panel-header-stack">
+      <div>
+        <h2>Busca de pessoa</h2>
+        <p class="panel-lead">Digite ao menos 3 caracteres para encontrar nomes reais e visualizar a trajetoria completa.</p>
+      </div>
+      <div class="server-search-meta" id="person-search-stats"></div>
+    </div>
+    <div class="server-search-layout">
+      <div class="server-search-box">
+        <label for="person-search-input">Nome</label>
+        <div class="server-search-input-wrap">
+          <input id="person-search-input" type="search" placeholder="Ex.: Jefferson Silva dos Anjos" autocomplete="off">
+          <button id="person-search-clear" class="ghost-button" type="button">Limpar</button>
+        </div>
+        <div class="search-results" id="person-search-results" hidden></div>
+      </div>
+    </div>
+    <div class="trajectory-panel" id="person-trajectory-panel">
+      <div class="empty-state">
+        <strong>Selecione uma pessoa para ver a trajetoria.</strong>
+        <p>A busca reaproveita o filtro de limpeza para evitar patentes, cargos e outros textos ruidosos.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Servidores mais citados</h2>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Pessoa</th>
+            <th>Atos</th>
+            <th>Orgaos</th>
+            <th>Ultimo ato</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in server_rows %}
+            <tr>
+              <td>{{ row.pessoa }}</td>
+              <td>{{ row.atos }}</td>
+              <td>{{ row.orgaos }}</td>
+              <td>{{ row.ultimo_ato }}</td>
+              <td><button class="link-button person-shortcut" type="button" data-person="{{ row.pessoa }}">Ver trajetoria</button></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/servidores.js') }}"></script>
+{% endblock %}

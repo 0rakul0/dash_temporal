@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DOU-RJ | {{ page_title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-seal">RJ</div>
+        <div class="brand-copy">
+          <strong>DOU-RJ</strong>
+          <span>Diario Oficial do Estado do Rio de Janeiro</span>
+        </div>
+      </div>
+
+      <button class="sidebar-mobile-toggle" id="menu-toggle" type="button" aria-label="Abrir menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="sidebar-nav">
+        {% for item in nav_items %}
+          <a href="{{ url_for(item.endpoint) }}" class="nav-link{% if active_endpoint == item.endpoint %} active{% endif %}">
+            <span class="nav-icon" data-icon="{{ item.icon }}"></span>
+            <span>{{ item.label }}</span>
+          </a>
+        {% endfor %}
+      </nav>
+
+      <div class="sidebar-status">
+        <div class="status-title">Atualizado em</div>
+        <strong>{{ sidebar_status.updated_at }}</strong>
+        <span>Fonte: {{ sidebar_status.source }}</span>
+      </div>
+
+      <a class="sidebar-about" href="{{ url_for('index') }}#metodologia">
+        <span class="nav-icon" data-icon="info"></span>
+        <span>Sobre o projeto</span>
+      </a>
+    </aside>
+
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

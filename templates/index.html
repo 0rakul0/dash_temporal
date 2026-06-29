@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+{% endblock %}
+
+{% block content %}
+  <section class="hero" id="visao-geral">
+    <div class="hero-main">
+      <div class="hero-actions">
+        <button class="mobile-menu-button" id="mobile-menu" type="button" aria-label="Abrir navegacao">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="hero-actions-right">
+          <button class="primary-button" id="export-json" type="button">
+            <span class="button-icon" data-icon="download"></span>
+            <span>Exportar</span>
+          </button>
+          <div class="period-pill">
+            <span class="button-icon" data-icon="calendar"></span>
+            <span id="hero-period-label">--/--/---- - --/--/----</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-copy">
+        <h1>Nomeacoes e exoneracoes publicadas no DOU-RJ</h1>
+        <p>
+          Acompanhe em tempo real os atos oficiais publicados no Diario Oficial do
+          Estado do Rio de Janeiro. Mais transparencia, mais dados, mais gestao.
+        </p>
+      </div>
+    </div>
+
+    <aside class="method-card">
+      <div class="method-icon" data-icon="file"></div>
+      <div>
+        <h2>Metodologia</h2>
+        <p>
+          Coletamos e estruturamos os atos de nomeacao e exoneracao publicados no
+          DOU-RJ, identificando orgaos, cargos, datas e impactos.
+        </p>
+        <a href="#metodologia">Saiba mais sobre a metodologia</a>
+      </div>
+    </aside>
+  </section>
+
+  <section class="metrics-grid" id="metricas"></section>
+
+  <section class="filters-panel" id="filters-panel">
+    <div class="filters-row">
+      <label class="filter-control filter-control-wide">
+        <span>Periodo</span>
+        <div class="date-range">
+          <span class="button-icon" data-icon="calendar"></span>
+          <input type="date" id="start-date" name="start">
+          <span class="date-divider">-</span>
+          <input type="date" id="end-date" name="end">
+        </div>
+      </label>
+
+      <label class="filter-control">
+        <span>Tipo de ato</span>
+        <select id="tipo-ato" name="tipo"></select>
+      </label>
+
+      <label class="filter-control">
+        <span>Orgao / Secretaria</span>
+        <select id="orgao" name="orgao"></select>
+      </label>
+
+      <label class="filter-control">
+        <span>Cargo</span>
+        <select id="cargo" name="cargo"></select>
+      </label>
+
+      <label class="filter-control">
+        <span>Governo</span>
+        <select id="governo" name="governo"></select>
+      </label>
+
+      <div class="filter-action">
+        <button class="outline-button" id="clear-filters" type="button">
+          <span class="button-icon" data-icon="refresh"></span>
+          <span>Limpar filtros</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="charts-grid" id="series">
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Evolucao mensal de atos</h2>
+      </div>
+      <div id="monthly-chart" class="chart-host"></div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Fluxo de atos no periodo</h2>
+      </div>
+      <div id="flow-chart" class="chart-host"></div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Saldo acumulado de atos</h2>
+      </div>
+      <div id="balance-chart" class="chart-host"></div>
+    </article>
+  </section>
+
+  <section class="insights-grid" id="orgaos">
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Ranking de orgaos por saldo de atos</h2>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Orgao / Secretaria</th>
+              <th>Nomeacoes</th>
+              <th>Exoneracoes</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-body"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel" id="timeline">
+      <div class="panel-header">
+        <h2>Timeline de atos recentes</h2>
+      </div>
+      <div id="timeline-list" class="timeline-list"></div>
+    </article>
+
+    <article class="panel" id="metodologia">
+      <div class="panel-header">
+        <h2>Sobre os dados</h2>
+      </div>
+      <div class="meta-list" id="meta-list"></div>
+      <div class="panel-footer-link">
+        <button class="link-button" id="reload-data" type="button">Recarregar consolidado</button>
+        <span id="reload-status"></span>
+      </div>
+    </article>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

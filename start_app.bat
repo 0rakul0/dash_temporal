@@ -23,6 +23,6 @@ if not exist "saida\consolidado\retornos.parquet" (
     exit /b 21
 )
 
-echo Iniciando dashboard com base consolidada local...
+echo Iniciando painel Flask com base consolidada local...
 .venv\Scripts\python.exe app.py
 pause

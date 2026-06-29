@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="page-hero">
+    <div>
+      <h1>{{ page_heading }}</h1>
+      <p>{{ page_description }}</p>
+    </div>
+  </section>
+
+  <section class="page-summary-grid">
+    {% for card in summary_cards %}
+      <article class="panel summary-card">
+        <span>{{ card.label }}</span>
+        <strong>{{ card.value }}</strong>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="page-grid-two">
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Volume por mes</h2>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th>Atos</th>
+              <th>Nomeacoes</th>
+              <th>Exoneracoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in publication_rows %}
+              <tr>
+                <td>{{ row.ano_mes }}</td>
+                <td>{{ row.atos }}</td>
+                <td>{{ row.nomeacoes }}</td>
+                <td>{{ row.exoneracoes }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Dias com maior densidade</h2>
+      </div>
+      <div class="list-stack">
+        {% for row in day_rows %}
+          <div class="list-row">
+            <strong>{{ row.data_movimentacao }}</strong>
+            <span>{{ row.total }} atos</span>
+          </div>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+{% endblock %}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Starting Dash app"
+echo "Starting Flask app"
 echo "PORT=${PORT:-not-set}"
 echo "PWD=$(pwd)"
 echo "Python=$(python --version)"

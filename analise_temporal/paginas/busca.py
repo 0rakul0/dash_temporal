@@ -43,6 +43,59 @@ def _is_noise(name: str) -> bool:
     return False
 
 
+def _norm_text(value) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if text.lower() == "nan":
+        return ""
+    return _fold(text).lower()
+
+
+def _covers_text(candidate: str, reference: str) -> bool:
+    if candidate == reference:
+        return True
+    if not reference:
+        return bool(candidate)
+    return bool(candidate) and reference in candidate
+
+
+def _is_more_complete(candidate, reference) -> bool:
+    orgao_candidate = _norm_text(candidate.get("orgao"))
+    orgao_reference = _norm_text(reference.get("orgao"))
+    cargo_candidate = _norm_text(candidate.get("cargo"))
+    cargo_reference = _norm_text(reference.get("cargo"))
+
+    same_or_better_orgao = _covers_text(orgao_candidate, orgao_reference)
+    same_or_better_cargo = _covers_text(cargo_candidate, cargo_reference)
+
+    strictly_better_orgao = len(orgao_candidate) > len(orgao_reference)
+    strictly_better_cargo = len(cargo_candidate) > len(cargo_reference)
+    has_more_content = strictly_better_orgao or strictly_better_cargo
+
+    return same_or_better_orgao and same_or_better_cargo and has_more_content
+
+
+def _deduplicate_person_rows(frame):
+    if frame.empty:
+        return frame
+
+    deduped_groups = []
+    group_cols = ["pessoa", "data_movimentacao", "tipo_ato", "governador_edicao"]
+
+    for _, group in frame.groupby(group_cols, dropna=False, sort=False, observed=False):
+        records = group.to_dict("records")
+        kept = []
+        for record in records:
+            if any(_is_more_complete(other, record) for other in records if other is not record):
+                continue
+            kept.append(record)
+        deduped_groups.append(kept or records)
+
+    deduped = [record for group in deduped_groups for record in group]
+    return frame.__class__(deduped).reindex(columns=frame.columns)
+
+
 pessoas = [p for p in dados.df_mov["pessoa"].unique() if not _is_noise(p)]
 pessoas_fold = [_fold(p) for p in pessoas]
 vectorizer = TfidfVectorizer(analyzer="char", ngram_range=(1, 3), lowercase=True)
@@ -124,6 +177,7 @@ def register_callbacks(app):
 
         dff = dados.df_mov[dados.df_mov["pessoa"] == pessoa].copy()
         dff = dff.sort_values("data_movimentacao")
+        dff = _deduplicate_person_rows(dff)
 
         total_atos = len(dff)
         governos = dff["governador_edicao"].nunique()
