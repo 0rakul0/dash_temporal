@@ -164,20 +164,24 @@ function renderAlertasPage(payload) {
     host.innerHTML = (payload.alert_rows || [])
       .map(
         (row) => {
-          const variation = parseInt(row.variacao, 10) || 0;
-          let variationLabel = "Sem mudanca no volume de pessoas";
-          if (variation > 0) {
-            variationLabel = `Aumento de ${variation} pessoa${variation === 1 ? "" : "s"}`;
-          } else if (variation < 0) {
-            const decrease = Math.abs(variation);
-            variationLabel = `Reducao de ${decrease} pessoa${decrease === 1 ? "" : "s"}`;
+          const recentBalance = parseInt(row.saldo_recente, 10) || 0;
+          const previousBalance = parseInt(row.saldo_anterior, 10) || 0;
+          const balanceChange = parseInt(row.variacao_saldo, 10) || 0;
+          const formatSignedNumber = (value) => (value > 0 ? `+${value}` : String(value));
+          let changeLabel = "Sem mudanca no saldo";
+          if (balanceChange > 0) {
+            changeLabel = `Saldo melhorou em ${balanceChange}`;
+          } else if (balanceChange < 0) {
+            changeLabel = `Saldo piorou em ${Math.abs(balanceChange)}`;
           }
           return `
           <tr>
             <td>${escapeHtml(row.orgao)}</td>
-            <td>${escapeHtml(String(parseInt(row.recentes, 10) || 0))}</td>
-            <td>${escapeHtml(String(parseInt(row.anteriores, 10) || 0))}</td>
-            <td>${escapeHtml(variationLabel)}</td>
+            <td>${escapeHtml(String(parseInt(row.nomeacoes_recentes, 10) || 0))}</td>
+            <td>${escapeHtml(String(parseInt(row.exoneracoes_recentes, 10) || 0))}</td>
+            <td>${escapeHtml(formatSignedNumber(recentBalance))}</td>
+            <td>${escapeHtml(formatSignedNumber(previousBalance))}</td>
+            <td>${escapeHtml(changeLabel)}</td>
           </tr>
         `;
         },

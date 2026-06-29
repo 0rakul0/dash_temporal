@@ -75,7 +75,7 @@ PAGE_SHELL = {
         "template": "alertas.html",
         "title": "Alertas",
         "heading": "Sinais de variacao recente",
-        "description": "Compare pessoas unicas por orgao entre os ultimos 30 dias e a janela imediatamente anterior para ver onde entrou ou saiu mais gente.",
+        "description": "Compare o saldo de pessoas por orgao, calculado como pessoas unicas nomeadas menos pessoas unicas exoneradas, entre os ultimos 30 dias e a janela anterior.",
         "active_endpoint": "alertas_page",
     },
 }
@@ -816,27 +816,65 @@ def _alertas_context() -> dict[str, object]:
     recent_people["orgao_key"] = recent_people["orgao"].map(_orgao_group_key)
     previous_people["orgao_key"] = previous_people["orgao"].map(_orgao_group_key)
     label_map = _orgao_display_labels(pd.concat([recent_people, previous_people], ignore_index=True))
-    recent_counts = recent_people[recent_people["orgao_key"] != ""].groupby("orgao_key")["pessoa"].nunique()
-    previous_counts = previous_people[previous_people["orgao_key"] != ""].groupby("orgao_key")["pessoa"].nunique()
+
+    recent_nomeacoes = (
+        recent_people[(recent_people["orgao_key"] != "") & (recent_people["tipo_ato"] == "nomeacao")]
+        .groupby("orgao_key")["pessoa"]
+        .nunique()
+    )
+    recent_exoneracoes = (
+        recent_people[(recent_people["orgao_key"] != "") & (recent_people["tipo_ato"] == "exoneracao")]
+        .groupby("orgao_key")["pessoa"]
+        .nunique()
+    )
+    previous_nomeacoes = (
+        previous_people[(previous_people["orgao_key"] != "") & (previous_people["tipo_ato"] == "nomeacao")]
+        .groupby("orgao_key")["pessoa"]
+        .nunique()
+    )
+    previous_exoneracoes = (
+        previous_people[(previous_people["orgao_key"] != "") & (previous_people["tipo_ato"] == "exoneracao")]
+        .groupby("orgao_key")["pessoa"]
+        .nunique()
+    )
+
     delta = (
-        pd.DataFrame({"recentes": recent_counts, "anteriores": previous_counts})
+        pd.DataFrame(
+            {
+                "nomeacoes_recentes": recent_nomeacoes,
+                "exoneracoes_recentes": recent_exoneracoes,
+                "nomeacoes_anteriores": previous_nomeacoes,
+                "exoneracoes_anteriores": previous_exoneracoes,
+            }
+        )
         .fillna(0)
-        .assign(variacao=lambda df: df["recentes"] - df["anteriores"])
-        .sort_values("variacao", ascending=False)
+        .assign(
+            saldo_recente=lambda df: df["nomeacoes_recentes"] - df["exoneracoes_recentes"],
+            saldo_anterior=lambda df: df["nomeacoes_anteriores"] - df["exoneracoes_anteriores"],
+        )
+        .assign(
+            variacao_saldo=lambda df: df["saldo_recente"] - df["saldo_anterior"],
+            abs_saldo_recente=lambda df: df["saldo_recente"].abs(),
+        )
+        .sort_values(["abs_saldo_recente", "saldo_recente", "variacao_saldo"], ascending=[False, False, False])
         .head(12)
         .reset_index()
         .rename(columns={"index": "orgao_key"})
     )
     delta["orgao"] = delta["orgao_key"].map(label_map).fillna(delta["orgao_key"])
 
+    total_nomeacoes_recentes = int(recent_people.loc[recent_people["tipo_ato"] == "nomeacao", "pessoa"].nunique())
+    total_exoneracoes_recentes = int(recent_people.loc[recent_people["tipo_ato"] == "exoneracao", "pessoa"].nunique())
+
     return {
         "page_title": "Alertas",
         "page_heading": "Sinais de variacao recente",
-        "page_description": "Compare pessoas unicas por orgao entre os ultimos 30 dias e a janela imediatamente anterior para ver onde entrou ou saiu mais gente.",
+        "page_description": "Compare o saldo de pessoas por orgao, calculado como pessoas unicas nomeadas menos pessoas unicas exoneradas, entre os ultimos 30 dias e a janela anterior.",
         "summary_cards": [
-            {"label": "Pessoas unicas nos ultimos 30 dias", "value": _format_int(recent_people["pessoa"].nunique())},
+            {"label": "Pessoas nomeadas nos ultimos 30 dias", "value": _format_int(total_nomeacoes_recentes)},
+            {"label": "Pessoas exoneradas nos ultimos 30 dias", "value": _format_int(total_exoneracoes_recentes)},
             {"label": "Janela comparada", "value": f"{recent_start.strftime('%d/%m/%Y')} ate {latest.strftime('%d/%m/%Y')}"},
-            {"label": "Orgaos com mais gente", "value": _format_int(int((delta['variacao'] > 0).sum())) if not delta.empty else "0"},
+            {"label": "Orgaos com saldo positivo", "value": _format_int(int((delta['saldo_recente'] > 0).sum())) if not delta.empty else "0"},
         ],
         "alert_rows": delta.to_dict("records"),
         "timeline_rows": _timeline_payload(recent, limit=10),
