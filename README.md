@@ -6,8 +6,8 @@ URL publica: <https://dash-temporal.onrender.com/>
 
 Este repositorio e o ambiente de deploy. O desenvolvimento principal fica em
 `D:\github\exoneracoes_nomeacoes_dou`; a consolidacao e a limpeza dos dados
-acontecem la. Aqui, ficam apenas o app e os arquivos consolidados consumidos
-pelo dashboard.
+acontecem la. Aqui, ficam apenas o app, seus arquivos estaticos e os arquivos
+consolidados consumidos pelo dashboard.
 
 ## Arquivos incluidos
 
@@ -22,6 +22,12 @@ pelo dashboard.
 Quando a base analitica mudar no projeto principal, copie apenas os arquivos de
 `saida/consolidado/` para este repositorio antes do deploy ou da sincronizacao
 com o GitHub.
+
+Nao devem entrar aqui:
+
+- `LAKE/`, `diarios_oficiais/` e demais insumos brutos da coleta.
+- `saida/analises/` e outros artefatos intermediarios de processamento.
+- scripts de extracao, deduplicacao, consolidacao ou analise incremental.
 
 ## Render
 
