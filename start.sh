@@ -2,7 +2,8 @@
 set -euo pipefail
 
 echo "Starting Flask app"
-echo "PORT=${PORT:-not-set}"
+PORT="${PORT:-8052}"
+echo "PORT=${PORT}"
 echo "PWD=$(pwd)"
 echo "Python=$(python --version)"
 

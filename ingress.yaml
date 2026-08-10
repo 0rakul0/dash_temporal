@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: #CI_PROJECT_NAME#
+  namespace: #CI_PROJECT_ROOT_NAMESPACE#-#CI_PROJECT_NAME#
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: #CI_PROJECT_ROOT_NAMESPACE#-#CI_PROJECT_NAME#-dev.ipea.gov.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: #CI_PROJECT_NAME#
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - #CI_PROJECT_ROOT_NAMESPACE#-#CI_PROJECT_NAME#-dev.ipea.gov.br
+      secretName: ipea-star-certificate

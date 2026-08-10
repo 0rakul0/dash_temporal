@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: #CI_PROJECT_NAME#
+  namespace: #CI_PROJECT_ROOT_NAMESPACE#-#CI_PROJECT_NAME#
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: #CI_PROJECT_NAME#
+  template:
+    metadata:
+      labels:
+        app: #CI_PROJECT_NAME#
+    spec:
+      containers:
+        - name: #CI_PROJECT_NAME#
+          image: #CI_REGISTRY_IMAGE#:#CI_COMMIT_SHA#
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8052
+          env:
+            - name: PORT
+              value: "8052"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8052
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8052
+            initialDelaySeconds: 45
+            periodSeconds: 30
+      imagePullSecrets:
+        - name: registry-gitlab-ipealegis

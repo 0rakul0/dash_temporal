@@ -1,9 +1,6 @@
-dash>=4.2.0
 Flask>=3.0.0
 gunicorn>=23.0.0
-networkx>=3.0
 numpy>=1.26
 pandas>=2.0.0
-plotly>=5.20.0
 pyarrow>=14.0.0
 scikit-learn>=1.7.0

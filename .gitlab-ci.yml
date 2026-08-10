@@ -1,0 +1,71 @@
+stages:
+  - build
+  - deploy
+  - stop
+
+build:
+  stage: build
+  tags:
+    - linux
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "Building the application container..."
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - echo "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE CI_COMMIT_SHA=$CI_COMMIT_SHA"
+    - /kaniko/executor --context "$CI_PROJECT_DIR" --dockerfile "$CI_PROJECT_DIR/Dockerfile" --destination "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+
+deploy:
+  stage: deploy
+  dependencies:
+    - build
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: [""]
+  environment:
+    name: dev
+    url: https://$CI_PROJECT_ROOT_NAMESPACE-$CI_PROJECT_NAME-dev.ipea.gov.br
+    kubernetes:
+      namespace: $CI_PROJECT_ROOT_NAMESPACE-$CI_PROJECT_NAME
+    on_stop: stop_app
+  script:
+    - kubectl config get-contexts
+    - kubectl config use-context ipealegis/k8s-agents:ipealegis
+    - echo "Transforming yaml files..."
+    - sed -i -e "s|#CI_PROJECT_ROOT_NAMESPACE#|$CI_PROJECT_ROOT_NAMESPACE|g" deployment.yaml
+    - sed -i -e "s|#CI_PROJECT_NAME#|$CI_PROJECT_NAME|g" deployment.yaml
+    - sed -i -e "s|#CI_REGISTRY_IMAGE#|$CI_REGISTRY_IMAGE|g" deployment.yaml
+    - sed -i -e "s|#CI_COMMIT_SHA#|$CI_COMMIT_SHA|g" deployment.yaml
+    - sed -i -e "s|#CI_PROJECT_ROOT_NAMESPACE#|$CI_PROJECT_ROOT_NAMESPACE|g" service.yaml
+    - sed -i -e "s|#CI_PROJECT_NAME#|$CI_PROJECT_NAME|g" service.yaml
+    - sed -i -e "s|#CI_PROJECT_ROOT_NAMESPACE#|$CI_PROJECT_ROOT_NAMESPACE|g" ingress.yaml
+    - sed -i -e "s|#CI_PROJECT_NAME#|$CI_PROJECT_NAME|g" ingress.yaml
+    - echo "Deploying image=$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+    - kubectl apply -f deployment.yaml
+    - kubectl rollout status deployment/$CI_PROJECT_NAME --namespace=$CI_PROJECT_ROOT_NAMESPACE-$CI_PROJECT_NAME --timeout=5m
+    - kubectl apply -f service.yaml
+    - kubectl apply -f ingress.yaml
+
+stop_app:
+  stage: stop
+  dependencies:
+    - deploy
+  variables:
+    GIT_STRATEGY: none
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: [""]
+  script:
+    - kubectl config get-contexts
+    - kubectl config use-context ipealegis/k8s-agents:ipealegis
+    - kubectl delete ingress -n "$CI_PROJECT_ROOT_NAMESPACE-$CI_PROJECT_NAME" "$CI_PROJECT_NAME" --ignore-not-found
+    - kubectl delete service -n "$CI_PROJECT_ROOT_NAMESPACE-$CI_PROJECT_NAME" "$CI_PROJECT_NAME" --ignore-not-found
+    - kubectl delete deployment -n "$CI_PROJECT_ROOT_NAMESPACE-$CI_PROJECT_NAME" "$CI_PROJECT_NAME" --ignore-not-found
+  when: manual
+  environment:
+    name: dev
+    kubernetes:
+      namespace: $CI_PROJECT_ROOT_NAMESPACE-$CI_PROJECT_NAME
+    action: stop

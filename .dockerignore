@@ -1,0 +1,14 @@
+.git/
+.idea/
+.venv/
+__pycache__/
+*.py[cod]
+.cache/
+logs/
+*.log
+output/
+scripts/
+atualizar_github.bat
+start_app.bat
+README.md
+render.yaml
