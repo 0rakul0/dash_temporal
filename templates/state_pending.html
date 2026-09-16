@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="state-selector state-pending">
+    <div class="state-selector-copy">
+      <span class="eyebrow">{{ state_name }}</span>
+      <h1>Dados em preparação</h1>
+      <p>A base para {{ state_name }} ainda não está disponível neste painel. Quando ela for publicada, esta rota abrirá o dashboard específico do estado.</p>
+      <a class="outline-button button-link" href="{{ url_for('index') }}">Voltar para o mapa</a>
+    </div>
+  </section>
+{% endblock %}

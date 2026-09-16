@@ -4,10 +4,14 @@ import os
 import re
 import unicodedata
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from gzip import decompress
+from json import loads
+from urllib.request import urlopen
 
 import pandas as pd
-from flask import Flask, abort, jsonify, redirect, render_template, request, send_file, url_for
+from flask import Flask, Response, abort, jsonify, redirect, render_template, request, send_file, url_for
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -17,8 +21,69 @@ from analise_temporal.services import dados
 app = Flask(__name__)
 server = app
 
+STATE_DESTINATIONS = {
+    "11": ("RO", "Rondônia"), "12": ("AC", "Acre"), "13": ("AM", "Amazonas"), "14": ("RR", "Roraima"), "15": ("PA", "Pará"), "16": ("AP", "Amapá"), "17": ("TO", "Tocantins"),
+    "21": ("MA", "Maranhão"), "22": ("PI", "Piauí"), "23": ("CE", "Ceará"), "24": ("RN", "Rio Grande do Norte"), "25": ("PB", "Paraíba"), "26": ("PE", "Pernambuco"), "27": ("AL", "Alagoas"), "28": ("SE", "Sergipe"), "29": ("BA", "Bahia"),
+    "31": ("MG", "Minas Gerais"), "32": ("ES", "Espírito Santo"), "33": ("RJ", "Rio de Janeiro"), "35": ("SP", "São Paulo"),
+    "41": ("PR", "Paraná"), "42": ("SC", "Santa Catarina"), "43": ("RS", "Rio Grande do Sul"),
+    "50": ("MS", "Mato Grosso do Sul"), "51": ("MT", "Mato Grosso"), "52": ("GO", "Goiás"), "53": ("DF", "Distrito Federal"),
+}
+IBGE_STATE_CODES = tuple(STATE_DESTINATIONS)
+_brazil_map_svg: str | None = None
+
+
+def _official_brazil_map_svg() -> str:
+    """Create one interactive SVG from the official IBGE state meshes."""
+    global _brazil_map_svg
+    if _brazil_map_svg:
+        return _brazil_map_svg
+
+    def fetch_mesh(code: str) -> tuple[str, dict]:
+        url = f"https://servicodados.ibge.gov.br/api/v3/malhas/estados/{code}?formato=application/vnd.geo+json&qualidade=minima"
+        with urlopen(url, timeout=20) as response:  # nosec B310 - fixed official IBGE URL
+            content = response.read()
+            if content.startswith(b"\x1f\x8b"):
+                content = decompress(content)
+            return code, loads(content)["features"][0]["geometry"]
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        states = list(executor.map(fetch_mesh, IBGE_STATE_CODES))
+
+    def rings(geometry: dict) -> list[list[list[float]]]:
+        return geometry["coordinates"] if geometry["type"] == "Polygon" else [ring for polygon in geometry["coordinates"] for ring in polygon]
+
+    points = [point for _, geometry in states for ring in rings(geometry) for point in ring]
+    longitudes = [point[0] for point in points]
+    latitudes = [point[1] for point in points]
+    width, height, padding = 620, 680, 24
+    scale = min((width - 2 * padding) / (max(longitudes) - min(longitudes)), (height - 2 * padding) / (max(latitudes) - min(latitudes)))
+    offset_x = (width - (max(longitudes) - min(longitudes)) * scale) / 2 - min(longitudes) * scale
+    offset_y = (height - (max(latitudes) - min(latitudes)) * scale) / 2 + max(latitudes) * scale
+
+    def path_data(geometry: dict) -> str:
+        segments = []
+        for ring in rings(geometry):
+            commands = []
+            for index, (longitude, latitude) in enumerate(ring):
+                commands.append(f"{'M' if index == 0 else 'L'}{offset_x + longitude * scale:.2f},{offset_y - latitude * scale:.2f}")
+            segments.append("".join(commands) + "Z")
+        return "".join(segments)
+
+    paths = []
+    for code, geometry in states:
+        abbreviation, name = STATE_DESTINATIONS[code]
+        available = code == "33"
+        path_class = "available" if available else "unavailable"
+        availability = "dados disponíveis" if available else "base em preparação"
+        path = f'<path class="{path_class}" d="{path_data(geometry)}"><title>{name} — {availability}</title></path>'
+        destination = "/rj" if available else f"/estado/{abbreviation.lower()}"
+        paths.append(f'<a href="{destination}" target="_top" aria-label="Abrir {name}">{path}</a>')
+
+    _brazil_map_svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" role="img" aria-label="Mapa do Brasil por estado, com dados disponíveis para o Rio de Janeiro"><style>.unavailable{{fill:#b7c1cf;stroke:#fff;stroke-width:1.5;stroke-linejoin:round}}.available{{fill:#2563eb;stroke:#fff;stroke-width:1.8;stroke-linejoin:round;cursor:pointer}}a:hover .available{{fill:#174fc5}}</style>{''.join(paths)}</svg>'''
+    return _brazil_map_svg
+
 NAV_ITEMS = [
-    {"endpoint": "index", "label": "Visao Geral", "icon": "home"},
+    {"endpoint": "rj_dashboard", "label": "Visao Geral", "icon": "home"},
     {"endpoint": "nomeacoes_page", "label": "Nomeacoes", "icon": "users-plus"},
     {"endpoint": "exoneracoes_page", "label": "Exoneracoes", "icon": "user-minus"},
     {"endpoint": "orgaos_page", "label": "Orgaos & Secretarias", "icon": "building"},
@@ -911,7 +976,28 @@ def inject_shell_defaults():
 
 @app.get("/")
 def index():
-    return render_template("index.html", page_title="Visao Geral", active_endpoint="index", page_key="index")
+    return render_template("state_selector.html", page_title="Selecione um estado", active_endpoint="", page_key="state-selector")
+
+
+@app.get("/assets/mapa-brasil.svg")
+def brazil_map_svg():
+    try:
+        return Response(_official_brazil_map_svg(), content_type="image/svg+xml", headers={"Cache-Control": "public, max-age=604800"})
+    except Exception:
+        return Response("<svg xmlns='http://www.w3.org/2000/svg'><text x='16' y='30'>Mapa indisponível</text></svg>", status=503, content_type="image/svg+xml")
+
+
+@app.get("/rj")
+def rj_dashboard():
+    return render_template("index.html", page_title="Visao Geral", active_endpoint="rj_dashboard", page_key="index")
+
+
+@app.get("/estado/<uf>")
+def state_pending(uf: str):
+    selected = next(((abbr, name) for abbr, name in STATE_DESTINATIONS.values() if abbr.lower() == uf.lower()), None)
+    if selected is None or selected[0] == "RJ":
+        abort(404)
+    return render_template("state_pending.html", page_title=selected[1], state_name=selected[1], page_key="state-pending")
 
 
 @app.get("/nomeacoes")

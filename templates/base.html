@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DOU-RJ | {{ page_title }}</title>
+  <title>{% if page_key in ('state-selector', 'state-pending') %}DOU Brasil{% else %}DOU-RJ{% endif %} | {{ page_title }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,12 +12,17 @@
 </head>
 <body data-page-key="{{ page_key or '' }}">
   <div class="app-shell">
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar{% if page_key in ('state-selector', 'state-pending') %} state-selector-sidebar{% endif %}" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-seal">RJ</div>
+        <div class="brand-seal">{% if page_key in ('state-selector', 'state-pending') %}BR{% else %}RJ{% endif %}</div>
         <div class="brand-copy">
-          <strong>DOU-RJ</strong>
-          <span>Diario Oficial do Estado do Rio de Janeiro</span>
+          {% if page_key in ('state-selector', 'state-pending') %}
+            <strong>DOU Brasil</strong>
+            <span>Dados dos Diarios Oficiais estaduais</span>
+          {% else %}
+            <strong>DOU-RJ</strong>
+            <span>Diario Oficial do Estado do Rio de Janeiro</span>
+          {% endif %}
         </div>
       </div>
 
@@ -27,6 +32,18 @@
         <span></span>
       </button>
 
+      {% if page_key in ('state-selector', 'state-pending') %}
+      <nav class="sidebar-nav">
+        <a href="{{ url_for('index') }}" class="nav-link active">
+          <span class="nav-icon" data-icon="home"></span>
+          <span>Selecionar estado</span>
+        </a>
+      </nav>
+      {% else %}
+      <a class="state-switcher" href="{{ url_for('index') }}">
+        <span class="nav-icon" data-icon="refresh"></span>
+        <span>Trocar estado</span>
+      </a>
       <nav class="sidebar-nav">
         {% for item in nav_items %}
           <a href="{{ url_for(item.endpoint) }}" class="nav-link{% if active_endpoint == item.endpoint %} active{% endif %}">
@@ -35,17 +52,20 @@
           </a>
         {% endfor %}
       </nav>
+      {% endif %}
 
+      {% if page_key not in ('state-selector', 'state-pending') %}
       <div class="sidebar-status">
         <div class="status-title">Atualizado em</div>
         <strong>{{ sidebar_status.updated_at }}</strong>
         <span>Fonte: {{ sidebar_status.source }}</span>
       </div>
 
-      <a class="sidebar-about" href="{{ url_for('index') }}#metodologia">
+      <a class="sidebar-about" href="{{ url_for('rj_dashboard') }}#metodologia">
         <span class="nav-icon" data-icon="info"></span>
         <span>Sobre o projeto</span>
       </a>
+      {% endif %}
     </aside>
 
     <main class="content">

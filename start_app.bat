@@ -3,6 +3,8 @@ setlocal EnableExtensions
 
 cd /d "%~dp0"
 
+if "%PORT%"=="" set "PORT=8054"
+
 if not exist ".venv\Scripts\python.exe" (
     echo ERRO: Python da virtualenv nao encontrado em .venv\Scripts\python.exe
     pause
@@ -23,6 +25,6 @@ if not exist "saida\consolidado\retornos.parquet" (
     exit /b 21
 )
 
-echo Iniciando painel Flask com base consolidada local...
+echo Iniciando painel Flask com base consolidada local em http://127.0.0.1:%PORT%/ ...
 .venv\Scripts\python.exe app.py
 pause

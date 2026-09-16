@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="state-selector">
+    <div class="state-selector-copy">
+      <span class="eyebrow">Painel nacional</span>
+      <h1>Escolha um estado para consultar os dados</h1>
+      <p>
+        Acompanhe atos publicados nos Diarios Oficiais estaduais. Estados em azul
+        possuem base disponivel; os demais serao adicionados conforme a cobertura crescer.
+      </p>
+      <div class="map-legend" aria-label="Legenda do mapa">
+        <span><i class="legend-swatch has-data"></i>Dados disponiveis</span>
+        <span><i class="legend-swatch no-data"></i>Sem dados</span>
+      </div>
+      <p class="state-selector-status" aria-live="polite" id="state-map-status">Selecione um estado para abrir seu destino.</p>
+    </div>
+
+    <div class="brazil-map-wrap">
+      <object class="brazil-map" data="{{ url_for('static', filename='brazil-states.svg') }}" type="image/svg+xml" width="620" height="680" aria-label="Mapa do Brasil por estado"></object>
+    </div>
+  </section>
+{% endblock %}
